@@ -17,6 +17,17 @@
     "build:docs": "typedoc --theme default --readme README.md --out docs/ --entryPointStrategy expand src/.",
     "prepare": "tsc"
   },
+  "keywords": [
+    "cluster",
+    "clustering",
+    "sharder",
+    "sharding",
+    "discord",
+    "discord sharder",
+    "discord.js",
+    "discord.js sharder",
+    "bot"
+  ],
   "repository": {
     "type": "git",
     "url": "git+https://github.com/Deivu/Indomitable.git"
