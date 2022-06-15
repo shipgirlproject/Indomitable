@@ -1,24 +1,25 @@
+import { Client } from 'discord.js';
 import { Indomitable } from '../Indomitable';
 import { Worker } from '../ipc/Worker';
 import { ClientEvents, InternalEvents, Transportable } from '../Util';
 import EventEmitter from 'events';
 
 export class ShardClientUtil extends EventEmitter {
-    public readonly client: any;
+    public readonly client: Client;
     public readonly mode: string;
     public readonly ipc: Worker;
     public readonly clusterId: number;
     public readonly clusterCount: number;
     public readonly shardIds: number[];
     public readonly shardCount: number;
-    constructor(manager: Indomitable, client: unknown) {
+    constructor(manager: Indomitable, client: Client) {
         super();
         this.client = client;
         this.mode = 'cluster';
         this.ipc = new Worker(this, manager);
         this.clusterId = Number(process.env.CLUSTER);
         this.clusterCount = Number(process.env.CLUSTER_TOTAL);
-        this.shardIds = this.client.options.shards;
+        this.shardIds = this.client.options.shards as number[];
         this.shardCount = Number(process.env.SHARDS_TOTAL);
     }
 

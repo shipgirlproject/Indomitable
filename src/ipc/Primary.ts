@@ -77,7 +77,7 @@ export class Primary {
                         this.manager.emit(content.op, content.data);
                     }
                 } catch (error: any) {
-                    if (!message.repliable) throw error;
+                    if (!message.repliable) throw error as any;
                     const internalError: InternalError = {
                         internal: true,
                         error: true,
@@ -90,8 +90,8 @@ export class Primary {
                 return;
             }
             this.manager.emit(LibraryEvents.MESSAGE, message);
-        } catch (error) {
-            this.manager.emit(LibraryEvents.ERROR, error);
+        } catch (error: unknown) {
+            this.manager.emit(LibraryEvents.ERROR, error as Error);
         }
     }
 }

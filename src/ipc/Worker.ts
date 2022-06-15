@@ -51,9 +51,10 @@ export class Worker {
                 try {
                     const content = message.content as InternalEvents;
                     if (content.op === ClientEvents.EVAL)
+                        // @ts-ignore -- needs to be accessed for broadcastEval
                         await message.reply(this.shard.client._eval(message.content.data));
                 } catch (error: any) {
-                    if (!message.repliable) throw error;
+                    if (!message.repliable) throw error as Error;
                     const internalError: InternalError = {
                         internal: true,
                         error: true,
@@ -66,9 +67,9 @@ export class Worker {
                 return;
             }
             this.manager.emit(LibraryEvents.MESSAGE, message);
-        } catch (error) {
+        } catch (error: unknown) {
             // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
-            this.shard.client.emit(LibraryEvents.ERROR, error);
+            this.shard.client.emit(LibraryEvents.ERROR, error as Error);
         }
     }
 }
