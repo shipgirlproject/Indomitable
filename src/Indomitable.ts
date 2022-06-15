@@ -68,7 +68,7 @@ export class Indomitable extends EventEmitter {
             if (signal === 'SIGKILL') return;
             cluster
                 .respawn()
-                .catch((error: any) => this.emit(LibraryEvents.ERROR, error));
+                .catch((error: unknown) => this.emit(LibraryEvents.ERROR, error as Error));
         });
     }
 
@@ -98,8 +98,8 @@ export class Indomitable extends EventEmitter {
                 this.emit('debug', `Starting Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
                 await cluster.spawn();
                 this.emit('debug', `Succesfully spawned Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
-            } catch (error) {
-                this.emit(LibraryEvents.ERROR, error);
+            } catch (error: unknown) {
+                this.emit(LibraryEvents.ERROR, error as Error);
                 if (this.retryFailed) {
                     this.emit('debug', `Failed to spawn Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]. Requeuing...`);
                     failedClusters.push(cluster);
@@ -113,8 +113,8 @@ export class Indomitable extends EventEmitter {
                     this.emit('debug', `Re-starting Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
                     await cluster.spawn();
                     this.emit('debug', `Succesfully spawned Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
-                } catch (error) {
-                    this.emit(LibraryEvents.ERROR, error);
+                } catch (error: unknown) {
+                    this.emit(LibraryEvents.ERROR, error as Error);
                     if (this.retryFailed) {
                         this.emit('debug', `Failed to spawn Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]. Requeuing...`);
                         failedClusters.push(cluster);

@@ -42,6 +42,6 @@ export class ShardClient {
         const content: InternalEvents = { ...partial, internal: true };
         shardClientUtil
             .send({ content, repliable: false })
-            .catch(error => this.client.emit(LibraryEvents.ERROR, error));
+            .catch((error: unknown) => this.client.emit(LibraryEvents.ERROR, error as Error));
     }
 }
