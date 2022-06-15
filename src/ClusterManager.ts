@@ -1,6 +1,6 @@
 import Cluster, { Worker } from 'cluster';
 import { Indomitable } from './Indomitable';
-import { ClientEvents, Delay, LibraryEvents } from './Util';
+import { Delay, LibraryEvents } from './Util';
 
 export interface ProcessOptions {
     id: number;
