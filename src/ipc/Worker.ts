@@ -1,6 +1,6 @@
 import { Client } from 'net-ipc';
 import { Indomitable } from '../Indomitable';
-import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, PromiseOutcome, InternalError } from '../Util';
+import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError } from '../Util';
 import { ShardClientUtil } from '../client/ShardClientUtil';
 
 export class Worker {
@@ -68,7 +68,7 @@ export class Worker {
             this.manager.emit(LibraryEvents.MESSAGE, message);
         } catch (error) {
             // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
-            this.manager.client.emit(LibraryEvents.ERROR, error);
+            this.shard.client.emit(LibraryEvents.ERROR, error);
         }
     }
 }

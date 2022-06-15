@@ -1,6 +1,6 @@
 import { Indomitable } from '../Indomitable';
 import { Worker } from '../ipc/Worker';
-import { ClientEvents, InternalEvents, LibraryEvents, Message, Transportable } from '../Util';
+import { ClientEvents, InternalEvents, Transportable } from '../Util';
 import EventEmitter from 'events';
 
 export class ShardClientUtil extends EventEmitter {

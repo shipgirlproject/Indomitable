@@ -1,5 +1,7 @@
+// @ts-ignore -- optional interface
+import { Client, ClientOptions as DiscordJsClientOptions, Intents } from 'discord.js';
 import { ClientOptions, ServerOptions } from 'net-ipc';
-import { Chunk, FetchSessions, LibraryEvents, SessionObject } from './Util';
+import { Chunk, Constructor, FetchSessions, LibraryEvents, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './ClusterManager';
 import { Primary } from './ipc/Primary';
@@ -15,7 +17,7 @@ export interface IpcOptions {
 export interface IndomitableOptions {
     clusterCount?: number;
     shardCount?: number|'auto';
-    clientOptions?: any;
+    clientOptions?: DiscordJsClientOptions;
     ipcOptions?: IpcOptions;
     nodeArgs?: string[];
     ipcTimeout?: number;
@@ -23,7 +25,7 @@ export interface IndomitableOptions {
     spawnDelay?: number;
     retryFailed?: boolean;
     autoRestart?: boolean;
-    client: any;
+    client: typeof Client;
     token: string;
 }
 
@@ -31,7 +33,7 @@ export class Indomitable extends EventEmitter {
     public clusterCount: number;
     public shardCount: number|'auto';
     public cachedSessionInfo?: SessionObject;
-    public readonly clientOptions: any;
+    public readonly clientOptions: DiscordJsClientOptions;
     public readonly ipcOptions: IpcOptions;
     public readonly nodeArgs: string[];
     public readonly ipcTimeout: number;
@@ -39,7 +41,7 @@ export class Indomitable extends EventEmitter {
     public readonly spawnDelay: number;
     public readonly retryFailed: boolean;
     public readonly autoRestart: boolean;
-    public readonly client: any;
+    public readonly client: typeof Client;
     public readonly clusters?: Map<number, ClusterManager>;
     public readonly ipc?: Primary;
     private readonly token: string;
@@ -47,7 +49,7 @@ export class Indomitable extends EventEmitter {
         super();
         this.clusterCount = options.clusterCount || Os.cpus().length;
         this.shardCount = options.shardCount || 'auto';
-        this.clientOptions = options.clientOptions || {};
+        this.clientOptions = options.clientOptions || { intents: [Intents.FLAGS.GUILDS] };
         this.ipcOptions = options.ipcOptions || {};
         this.nodeArgs = options.nodeArgs || [];
         this.ipcTimeout = options.ipcTimeout ?? 60000;
