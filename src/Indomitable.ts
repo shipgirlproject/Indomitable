@@ -8,11 +8,17 @@ import EventEmitter from 'node:events';
 import Cluster from 'node:cluster';
 import Os from 'node:os';
 
+/**
+ * Options to control IPC behavior
+ */
 export interface IpcOptions {
     primary?: ServerOptions;
     worker?: ClientOptions
 }
 
+/**
+ * Options to control Indomitable behavior
+ */
 export interface IndomitableOptions {
     clusterCount?: number|'auto';
     shardCount?: number|'auto';
@@ -36,18 +42,70 @@ export interface ShardEventData {
 }
 
 export declare interface Indomitable {
+    /**
+     * Emitted when data useful for debugging is produced
+     * @eventProperty
+     */
     on(event: 'debug', listener: (message: string) => void): this;
+    /**
+     * Emmited when an IPC connection is established
+     * @eventProperty
+     */
     on(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
+    /**
+     * Emmited when an IPC connection is disconencted
+     * @eventProperty
+     */
     on(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
+    /**
+     * Emmited when an IPC connection is closed
+     * @eventProperty
+     */
     on(event: 'close', listener: () => void): this;
+    /**
+     * Emmited when an IPC message is recieved
+     * @eventProperty
+     */
     on(event: 'message', listener: (message: Message) => void): this;
+    /**
+     * Emitted when an error occurs
+     * @eventProperty
+     */
     on(event: 'error', listener: (error: unknown) => void): this;
+    /**
+     * Emitted when a new worker process is forked
+     * @eventProperty
+     */
     on(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    /**
+     * Emitted when a worker process is ready
+     * @eventProperty
+     */
     on(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
+    /**
+     * Emitted when a worker process exits
+     * @eventProperty
+     */
     on(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+    /**
+     * Emitted when a Discord.js shard is ready
+     * @eventProperty
+     */
     on(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+    /**
+     * Emitted when a Discord.js shard is reconnecting
+     * @eventProperty
+     */
     on(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+    /**
+     * Emitted when a Discord.js shard resumes
+     * @eventProperty
+     */
     on(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+    /**
+     * Emitted when a Discord.js shard disconnects
+     * @eventProperty
+     */
     on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'debug', listener: (message: string) => void): this;
     once(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
@@ -77,6 +135,9 @@ export declare interface Indomitable {
     off(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
 }
 
+/**
+ * The main Indomitable class, exposing all functionality.
+ */
 export class Indomitable extends EventEmitter {
     public clusterCount: number|'auto';
     public shardCount: number|'auto';
@@ -93,6 +154,21 @@ export class Indomitable extends EventEmitter {
     public readonly clusters?: Map<number, ClusterManager>;
     public readonly ipc?: Primary;
     private readonly token: string;
+    /**
+     * @param [options.clusterCount=auto] The amount of clusters to spawn. Expects a number or 'auto'
+     * @param [options.shardCount=auto] The number of shards to create. Expects a number or 'auto'
+     * @param [options.clientOptions] Options for the Discord.js client
+     * @param [options.ipcOptions.primary] Options for the net-ipc server running on the primary process
+     * @param [options.ipcOptions.worker] Options for the net-ipc client running on each worker process
+     * @param [options.nodeArgs] An array of arguments for each child process
+     * @param [options.ipcTimeout] Time to wait before reporting a failed IPC connection
+     * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
+     * @param [options.spawnDelay] Time to wait before spawing another child process
+     * @param [options.retryFailed] Whether to attempt to start a cluster after it has failed
+     * @param [options.autoRestart] Whether to automatically restart shards that have been killed unintentionally
+     * @param [options.client] A Discord.js client class or a modified Discord.js client class
+     * @param options.token Discord bot token
+     */
     constructor(options: IndomitableOptions) {
         super();
         this.clusterCount = options.clusterCount || 'auto';
@@ -120,6 +196,10 @@ export class Indomitable extends EventEmitter {
         });
     }
 
+    /**
+     * Spawn a new ShardClient if this instance is a child process, or start a new cluster and IPC server if this instance is the primary process
+     * @returns A promise that resolves to void
+     */
     public async spawn(): Promise<void> {
         if (!Cluster.isPrimary) {
             const shardClient = new ShardClient(this);
@@ -170,6 +250,11 @@ export class Indomitable extends EventEmitter {
         }
     }
 
+    /**
+     * Restart specified cluster if this instance is the primary process
+     * @param clusterId ID of cluster to restart
+     * @returns void
+     */
     public async restart(clusterId: number) {
         if (!Cluster.isPrimary) return;
         const cluster = this.clusters!.get(clusterId);
@@ -177,6 +262,10 @@ export class Indomitable extends EventEmitter {
         await cluster.respawn();
     }
 
+    /**
+     * Restart all clusters if this instance is the primary process
+     * @returns void
+     */
     public async restartAll() {
         if (!Cluster.isPrimary) return;
         this.emit(LibraryEvents.DEBUG, `Restarting ${this.clusters!.size} clusters sequentially...`);
