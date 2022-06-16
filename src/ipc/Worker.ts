@@ -11,15 +11,14 @@ export class Worker {
         this.shard = shard;
         this.manager = manager;
         this.connection = new Client({ ...{ path: 'indomitable', compress: false, messagepack: true, reconnect: true }, ...(this.manager.ipcOptions.worker || {}) })
-            .on('ready', (...args) => this.shard.emit(LibraryEvents.READY, ...args))
             .on('close', (...args) => this.shard.emit(LibraryEvents.CLOSE, ...args))
             .on('status', (...args) => this.shard.emit(LibraryEvents.STATUS, ...args))
             .on('message', message => this.message(message))
-            .on('request', (message, response) => this.message(message, response));
-        if (this.shard.listeners(LibraryEvents.ERROR).length >= 1)
-            this.connection.on('error', (...args) => this.shard.emit(LibraryEvents.ERROR, ...args));
-        else
-            this.connection.on('error', () => null);
+            .on('request', (message, response) => this.message(message, response))
+            .on('error', (...args) => {
+                if (this.shard.listeners(LibraryEvents.ERROR).length === 0) return;
+                this.shard.emit(LibraryEvents.ERROR, ...args);
+            });
     }
 
     public async send(transportable: Transportable): Promise<any|void> {

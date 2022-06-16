@@ -1,6 +1,6 @@
 ## Indomitable
 
-> A lightweight (the actual ship is heavy though), performat & powerful sharder for Discord.JS. Indomitable uses cluster module to evenly spread her weight (load) across your cores.
+> A lightweight (the actual ship is heavy though), performat & powerful sharder for Discord.JS. Indomitable uses cluster module to evenly spread her weight (load) across your cores
 
 <p align="center">
     <img src="https://cdn.donmai.us/original/9b/cf/__indomitable_azur_lane_drawn_by_kincora__9bcf19b2f822ce75ea707e5047882d6a.png"> 
@@ -44,9 +44,9 @@ client.shard
 
 ### Notes
 
-* You don't need to call `client.login('token')` yourself, Indomitable will call it for you.
+* You don't need to call `client.login('token');` yourself, Indomitable will call it for you.
 
-* Extended clients that extend from discord.js client will work, as long as you use `client.login();` to get your bot running
+* Extended clients that extend from discord.js client will work, as long as you use `client.login('token');` to get your bot running
 
 * For fastest performance possible, install the optional dependency **MessagePack** `npm i --save msgpackr`
 
@@ -55,8 +55,8 @@ client.shard
 ### Indomitable Options
  Option | Type | Description | Required | Default |
 --------|------|-------------|----------|---------|
-clusterCount | number | How many clusters we should spawn | No  | # of your threads
-shardCount | number|'auto' | How many websocket shards we should make | No | 'auto'
+clusterCount | number or 'auto' | How many clusters we should spawn | No  | 'auto'
+shardCount | number or 'auto' | How many websocket shards we should make | No | 'auto'
 clientOptions | Object | Discord.JS Client Options | No | {}
 ipcOptions | Object{primary?: {}, worker?: {}} | Options for net-ipc | No | {}
 nodeArgs | string[] | Node arguments to pass to a cluster | No | []

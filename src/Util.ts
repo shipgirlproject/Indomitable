@@ -1,7 +1,5 @@
 import Https, { RequestOptions } from 'https';
 
-export type Constructor<T> = new (...args: any[]) => T;
-
 export enum ClientEvents {
     EVAL = 'eval',
     RESTART = 'restart',
@@ -14,7 +12,7 @@ export enum ClientEvents {
 }
 
 export enum LibraryEvents {
-    READY = 'ready',
+    DEBUG = 'debug',
     CONNECT = 'connect',
     DISCONNECT = 'disconnect',
     CLOSE = 'close',
