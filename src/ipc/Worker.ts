@@ -65,7 +65,7 @@ export class Worker {
                 }
                 return;
             }
-            this.manager.emit(LibraryEvents.MESSAGE, message);
+            this.shard.emit(LibraryEvents.MESSAGE, message);
         } catch (error: unknown) {
             // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
             this.shard.client.emit(LibraryEvents.ERROR, error as Error);
