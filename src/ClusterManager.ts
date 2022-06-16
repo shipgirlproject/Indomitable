@@ -2,12 +2,18 @@ import Cluster, { Worker } from 'node:cluster';
 import { Indomitable } from './Indomitable';
 import { Delay, LibraryEvents } from './Util';
 
+/**
+ * Options for child processes
+ */
 export interface ProcessOptions {
     id: number;
     shards: number[];
     manager: Indomitable;
 }
 
+/**
+ * A class to manage a cluster
+ */
 export class ClusterManager {
     public readonly manager: Indomitable;
     public readonly id: number;
@@ -15,6 +21,12 @@ export class ClusterManager {
     public started: boolean;
     public worker?: Worker;
     public tickReady?: Function;
+
+    /**
+     * @param options.id Cluster ID
+     * @param options.shards An array of numbers representing the shards that this cluster controls
+     * @param options.manager Indomitable instance that spawned this cluster
+     */
     constructor(options: ProcessOptions) {
         this.manager = options.manager;
         this.id = options.id;
@@ -24,17 +36,28 @@ export class ClusterManager {
         this.tickReady = undefined;
     }
 
+    /**
+     * Destroy associated worker process
+     * @param signal Process exit signal
+     */
     public destroy(signal: string = 'SIGTERM'): void {
         // no need to call cleanup here, we always attach an exit listener to clean
         this.worker?.kill(signal);
     }
 
+    /**
+     * Respawn associated worker process
+     * @param delay Time to wait before restarting worker process
+     */
     public async respawn(delay: number = this.manager.spawnDelay): Promise<void> {
         this.destroy('SIGKILL');
         if (delay) await Delay(delay);
         await this.spawn();
     }
 
+    /**
+     * Spawn a worker process
+     */
     public async spawn(): Promise<void> {
         this.manager.emit(LibraryEvents.DEBUG, `Spawning Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
         this.worker = Cluster.fork({
@@ -58,11 +81,19 @@ export class ClusterManager {
         if (!this.started) this.started = true;
     }
 
-    private cleanup(): void {
+    /**
+     * Remove all listeners on attached worker process and free from memory
+     */
+    private cleanup() {
         this.worker?.removeAllListeners();
         this.worker = undefined;
     }
 
+    /**
+     * Time to wait before reporting a fail when spawning a new shard
+     * @returns A promise that resolves to void
+     * @internal
+     */
     private wait(): Promise<void> {
         return new Promise((resolve, reject) => {
             const ms = this.manager.spawnTimeout * this.shards.length;
