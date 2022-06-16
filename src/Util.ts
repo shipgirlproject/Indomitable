@@ -1,5 +1,8 @@
 import Https, { RequestOptions } from 'node:https';
 
+/**
+ * Events for internal use
+ */
 export enum ClientEvents {
     EVAL = 'eval',
     RESTART = 'restart',
@@ -11,6 +14,9 @@ export enum ClientEvents {
     SHARD_DISCONNECT = 'shardDisconnect'
 }
 
+/**
+ * Events emitted by Indomitable
+ */
 export enum LibraryEvents {
     DEBUG = 'debug',
     CONNECT = 'connect',
@@ -28,18 +34,28 @@ export enum LibraryEvents {
     SHARD_DISCONNECT = 'shardDisconnect'
 }
 
+/**
+ * Values returned from a Promise
+ * @see {@link Promise}
+ */
 export interface PromiseOutcome {
 	status: 'fulfilled' | 'rejected';
 	value?: any;
 	reason?: any;
 }
 
+/**
+ * Data structure representing an internal event
+ */
 export interface InternalEvents {
     op: ClientEvents,
     data: any,
     internal: true
 }
 
+/**
+ * Data structure representing an internal error
+ */
 export interface InternalError {
     internal: true;
     error: true;
@@ -48,17 +64,26 @@ export interface InternalError {
     stack: string;
 }
 
+/**
+ * Data structure representing IPC data
+ */
 export interface Transportable {
     content: any;
     repliable?: boolean;
 }
 
+/**
+ * Data structure representing a IPC message
+ */
 export interface Message {
     reply: (data: any) => Promise<void>;
     content: any;
     repliable: boolean;
 }
 
+/**
+ * Data structure representing a Discord session
+ */
 export interface SessionObject {
 	url: string;
 	shards: number;
@@ -70,6 +95,12 @@ export interface SessionObject {
 	};
 }
 
+/**
+ * Wrapper function for fetching data using HTTP
+ * @param url URL of resource to fetch
+ * @param options RequestOptions to modify behavior
+ * @returns A promise containing data fetched, or an error
+ */
 export function Fetch(url: string|URL, options: RequestOptions): Promise<any> {
     return new Promise((resolve, reject) => {
         const request = Https.request(url, options, response => {
@@ -90,6 +121,11 @@ export function Fetch(url: string|URL, options: RequestOptions): Promise<any> {
     });
 }
 
+/**
+ * Fetch sessions from discord
+ * @param token Bot token
+ * @returns A promise containing a session object
+ */
 export async function FetchSessions(token: string): Promise<SessionObject> {
     const url = new URL('https://discord.com/api/v10/gateway/bot');
     const data = await Fetch(url, {
@@ -99,6 +135,12 @@ export async function FetchSessions(token: string): Promise<SessionObject> {
     return JSON.parse(data);
 }
 
+/**
+ * Modify an array to contain a the specified amount of chunks
+ * @param original An array of data
+ * @param chunks The amount of chunks to transform into
+ * @returns A modified array
+ */
 export function Chunk(original: any[], chunks: number): any[] {
     const array = [];
     for (let i = 0; i < original.length; i += chunks)
