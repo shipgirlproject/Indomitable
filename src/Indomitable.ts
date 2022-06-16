@@ -101,7 +101,7 @@ export class Indomitable extends EventEmitter {
         this.ipcOptions = options.ipcOptions || {};
         this.nodeArgs = options.nodeArgs || [];
         this.ipcTimeout = options.ipcTimeout ?? 60000;
-        this.spawnTimeout = options.spawnTimeout ?? 20000;
+        this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.retryFailed = options.retryFailed ?? true;
         this.autoRestart = options.autoRestart ?? false;
