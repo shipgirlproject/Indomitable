@@ -40,7 +40,7 @@ export class ClusterManager {
      * Destroy associated worker process
      * @param signal Process exit signal
      */
-    public destroy(signal: string = 'SIGTERM'): void {
+    public destroy(signal: string = 'SIGTERM') {
         // no need to call cleanup here, we always attach an exit listener to clean
         this.worker?.kill(signal);
     }
@@ -49,7 +49,7 @@ export class ClusterManager {
      * Respawn associated worker process
      * @param delay Time to wait before restarting worker process
      */
-    public async respawn(delay: number = this.manager.spawnDelay): Promise<void> {
+    public async respawn(delay: number = this.manager.spawnDelay) {
         this.destroy('SIGKILL');
         if (delay) await Delay(delay);
         await this.spawn();
@@ -58,7 +58,7 @@ export class ClusterManager {
     /**
      * Spawn a worker process
      */
-    public async spawn(): Promise<void> {
+    public async spawn() {
         this.manager.emit(LibraryEvents.DEBUG, `Spawning Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
         this.worker = Cluster.fork({
             SHARDS: this.shards.join(' '),
