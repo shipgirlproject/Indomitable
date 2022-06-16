@@ -43,6 +43,7 @@ export declare interface Indomitable {
     on(event: 'message', listener: (message: Message) => void): this;
     on(event: 'error', listener: (error: unknown) => void): this;
     on(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    on(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
     on(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
     on(event: 'shardReady', listener: (event: ShardEventData) => void): this;
     on(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
@@ -55,6 +56,7 @@ export declare interface Indomitable {
     once(event: 'message', listener: (message: Message) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
     once(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    once(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
     once(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
     once(event: 'shardReady', listener: (event: ShardEventData) => void): this;
     once(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
@@ -67,6 +69,7 @@ export declare interface Indomitable {
     off(event: 'message', listener: (message: Message) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;
     off(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    off(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
     off(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
     off(event: 'shardReady', listener: (event: ShardEventData) => void): this;
     off(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;

@@ -49,9 +49,10 @@ export class ClusterManager {
             this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code} signal ${signal}`);
             this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
         });
-        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, waiting for the cluster to be ready...`);
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
+        this.manager.emit(LibraryEvents.WORKER_READY, this);
+        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, waiting for the cluster to be ready...`);
         await Delay(this.manager.spawnDelay);
         // ensures that autoRestart won't conflict with retryFailed
         if (!this.started) this.started = true;
