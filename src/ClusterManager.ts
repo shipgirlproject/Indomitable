@@ -1,4 +1,4 @@
-import Cluster, { Worker } from 'cluster';
+import Cluster, { Worker } from 'node:cluster';
 import { Indomitable } from './Indomitable';
 import { Delay, LibraryEvents } from './Util';
 

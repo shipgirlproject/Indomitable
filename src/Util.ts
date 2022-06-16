@@ -1,4 +1,4 @@
-import Https, { RequestOptions } from 'https';
+import Https, { RequestOptions } from 'node:https';
 
 export enum ClientEvents {
     EVAL = 'eval',
