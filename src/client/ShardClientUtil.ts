@@ -2,7 +2,7 @@ import type { Client } from 'discord.js';
 import { Indomitable } from '../Indomitable';
 import { Worker } from '../ipc/Worker';
 import { ClientEvents, InternalEvents, Message, Transportable } from '../Util';
-import EventEmitter from 'events';
+import EventEmitter from 'node:events';
 
 export declare interface ShardClientUtil {
     on(event: 'close', listener: (reason: any) => void): this;

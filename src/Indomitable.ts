@@ -4,9 +4,9 @@ import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './U
 import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './ClusterManager';
 import { Primary } from './ipc/Primary';
-import EventEmitter from 'events';
-import Cluster from 'cluster';
-import Os from 'os';
+import EventEmitter from 'node:events';
+import Cluster from 'node:cluster';
+import Os from 'node:os';
 
 export interface IpcOptions {
     primary?: ServerOptions;
