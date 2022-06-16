@@ -1,8 +1,23 @@
-import { Client } from 'discord.js';
+import type { Client } from 'discord.js';
 import { Indomitable } from '../Indomitable';
 import { Worker } from '../ipc/Worker';
-import { ClientEvents, InternalEvents, Transportable } from '../Util';
+import { ClientEvents, InternalEvents, Message, Transportable } from '../Util';
 import EventEmitter from 'events';
+
+export declare interface ShardClientUtil {
+    on(event: 'close', listener: (reason: any) => void): this;
+    on(event: 'status', listener: (status: number) => void): this;
+    on(event: 'message', listener: (message: Message) => void): this;
+    on(event: 'error', listener: (error: unknown) => void): this;
+    once(event: 'close', listener: (reason: any) => void): this;
+    once(event: 'status', listener: (status: number) => void): this;
+    once(event: 'message', listener: (message: Message) => void): this;
+    once(event: 'error', listener: (error: unknown) => void): this;
+    off(event: 'close', listener: (reason: any) => void): this;
+    off(event: 'status', listener: (status: number) => void): this;
+    off(event: 'message', listener: (message: Message) => void): this;
+    off(event: 'error', listener: (error: unknown) => void): this;
+}
 
 export class ShardClientUtil extends EventEmitter {
     public readonly client: Client;

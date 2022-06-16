@@ -22,24 +22,19 @@ export class ClusterManager {
         this.tickReady = undefined;
     }
 
-    public cleanup(): void {
-        this.worker?.removeAllListeners();
-        this.worker = undefined;
-    }
-
     public destroy(signal: string = 'SIGTERM'): void {
+        // no need to call cleanup here, we always attach an exit listener to clean
         this.worker?.kill(signal);
-        this.cleanup();
     }
 
     public async respawn(delay: number = this.manager.spawnDelay): Promise<void> {
-        this.manager.emit('debug', `Killing the cluster with SIGKILL, then restarting it in ${delay}ms...`);
         this.destroy('SIGKILL');
         if (delay) await Delay(delay);
         await this.spawn();
     }
 
     public async spawn(): Promise<void> {
+        this.manager.emit(LibraryEvents.DEBUG, `Spawning Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
         this.worker = Cluster.fork({
             SHARDS: this.shards.join(' '),
             SHARDS_TOTAL: this.manager.shardCount.toString(),
@@ -49,13 +44,18 @@ export class ClusterManager {
         });
         this.worker.once('exit', (code, signal) => {
             this.cleanup();
-            this.manager.emit('debug', `Cluster ${this.id} exited with close code ${code} signal ${signal}`);
+            this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code} signal ${signal}`);
             this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
         });
-        this.manager.emit('debug', `Succesfully forked Cluster ${this.id}, waiting for the client to be ready...`);
+        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, waiting for the cluster to be ready...`);
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
         await Delay(this.manager.spawnDelay);
+    }
+
+    private cleanup(): void {
+        this.worker?.removeAllListeners();
+        this.worker = undefined;
     }
 
     private wait(): Promise<void> {

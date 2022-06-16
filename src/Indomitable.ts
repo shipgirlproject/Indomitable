@@ -1,7 +1,6 @@
-// @ts-ignore -- optional interface
-import { Client, ClientOptions as DiscordJsClientOptions, Intents } from 'discord.js';
-import { ClientOptions, ServerOptions } from 'net-ipc';
-import { Chunk, Constructor, FetchSessions, LibraryEvents, SessionObject } from './Util';
+import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
+import { ClientOptions, Connection, ServerOptions } from 'net-ipc';
+import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './ClusterManager';
 import { Primary } from './ipc/Primary';
@@ -15,7 +14,7 @@ export interface IpcOptions {
 }
 
 export interface IndomitableOptions {
-    clusterCount?: number;
+    clusterCount?: number|'auto';
     shardCount?: number|'auto';
     clientOptions?: DiscordJsClientOptions;
     ipcOptions?: IpcOptions;
@@ -29,8 +28,54 @@ export interface IndomitableOptions {
     token: string;
 }
 
+export interface ShardEventData {
+    clusterId: number,
+    shardId?: number,
+    replayed?: number,
+    event?: CloseEvent
+}
+
+export declare interface Indomitable {
+    on(event: 'debug', listener: (message: string) => void): this;
+    on(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
+    on(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
+    on(event: 'close', listener: () => void): this;
+    on(event: 'message', listener: (message: Message) => void): this;
+    on(event: 'error', listener: (error: unknown) => void): this;
+    on(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    on(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+    on(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+    on(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+    on(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+    on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+    once(event: 'debug', listener: (message: string) => void): this;
+    once(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
+    once(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
+    once(event: 'close', listener: () => void): this;
+    once(event: 'message', listener: (message: Message) => void): this;
+    once(event: 'error', listener: (error: unknown) => void): this;
+    once(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    once(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+    once(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+    once(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+    once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+    once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+    off(event: 'debug', listener: (message: string) => void): this;
+    off(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
+    off(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
+    off(event: 'close', listener: () => void): this;
+    off(event: 'message', listener: (message: Message) => void): this;
+    off(event: 'error', listener: (error: unknown) => void): this;
+    off(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+    off(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+    off(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+    off(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+    off(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+    off(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+}
+
 export class Indomitable extends EventEmitter {
-    public clusterCount: number;
+    public clusterCount: number|'auto';
     public shardCount: number|'auto';
     public cachedSessionInfo?: SessionObject;
     public readonly clientOptions: DiscordJsClientOptions;
@@ -47,9 +92,9 @@ export class Indomitable extends EventEmitter {
     private readonly token: string;
     constructor(options: IndomitableOptions) {
         super();
-        this.clusterCount = options.clusterCount || Os.cpus().length;
+        this.clusterCount = options.clusterCount || 'auto';
         this.shardCount = options.shardCount || 'auto';
-        this.clientOptions = options.clientOptions || { intents: [Intents.FLAGS.GUILDS] };
+        this.clientOptions = options.clientOptions || { intents: [1 << 0] };
         this.ipcOptions = options.ipcOptions || {};
         this.nodeArgs = options.nodeArgs || [];
         this.ipcTimeout = options.ipcTimeout ?? 60000;
@@ -79,13 +124,15 @@ export class Indomitable extends EventEmitter {
             return;
         }
         await this.ipc!.server.start();
+        if (typeof this.clusterCount !== 'number')
+            this.clusterCount = Os.cpus().length;
         if (typeof this.shardCount !== 'number') {
             this.cachedSessionInfo = await FetchSessions(this.token);
             this.shardCount = this.cachedSessionInfo.shards;
         }
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;
-        this.emit('debug', `Spawning ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
+        this.emit(LibraryEvents.DEBUG, `Starting ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
         const shards = [...Array(this.shardCount).keys()];
         const chunks = Chunk(shards, Math.round(this.shardCount / this.clusterCount));
         if (this.nodeArgs.length) Cluster.setupPrimary({ execArgv: this.nodeArgs });
@@ -95,13 +142,11 @@ export class Indomitable extends EventEmitter {
             const cluster = new ClusterManager({ id, shards: chunk, manager: this });
             this.clusters!.set(id, cluster);
             try {
-                this.emit('debug', `Starting Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
                 await cluster.spawn();
-                this.emit('debug', `Succesfully spawned Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
             } catch (error: unknown) {
                 this.emit(LibraryEvents.ERROR, error as Error);
                 if (this.retryFailed) {
-                    this.emit('debug', `Failed to spawn Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]. Requeuing...`);
+                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing Shard(s) => [ ${cluster.shards.join(', ')} ]. Requeuing...`);
                     failedClusters.push(cluster);
                 }
             }
@@ -110,13 +155,11 @@ export class Indomitable extends EventEmitter {
             while(failedClusters.length) {
                 const cluster = failedClusters.shift()!;
                 try {
-                    this.emit('debug', `Re-starting Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
                     await cluster.spawn();
-                    this.emit('debug', `Succesfully spawned Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]`);
                 } catch (error: unknown) {
                     this.emit(LibraryEvents.ERROR, error as Error);
                     if (this.retryFailed) {
-                        this.emit('debug', `Failed to spawn Cluster ${cluster.id} containing Shard(s) [${cluster.shards.join(', ')}]. Requeuing...`);
+                        this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing Shard(s) => [ ${cluster.shards.join(', ')} ]. Requeuing...`);
                         failedClusters.push(cluster);
                     }
                 }
@@ -133,7 +176,7 @@ export class Indomitable extends EventEmitter {
 
     public async restartAll() {
         if (!Cluster.isPrimary) return;
-        this.emit('debug', `Restarting ${this.clusters!.size} clusters sequentially...`);
+        this.emit(LibraryEvents.DEBUG, `Restarting ${this.clusters!.size} clusters sequentially...`);
         for (const cluster of this.clusters!.values()) await cluster.respawn();
     }
 }

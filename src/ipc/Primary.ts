@@ -8,7 +8,7 @@ export class Primary {
     constructor(manager: Indomitable) {
         this.manager = manager;
         this.server = new Server({ ...{ path: 'indomitable' }, ...(this.manager.ipcOptions.primary || {}) })
-            .on('ready', (...args) => this.manager.emit(LibraryEvents.READY, ...args))
+            .on('ready', (address: string) => this.manager.emit(LibraryEvents.DEBUG, `Indomitable's IPC server is now ready, currently bound at address: ${address}`))
             .on('connect', (...args) => this.manager.emit(LibraryEvents.CONNECT, ...args))
             .on('disconnect', (...args) => this.manager.emit(LibraryEvents.DISCONNECT, ...args))
             .on('close', (...args) => this.manager.emit(LibraryEvents.CLOSE, ...args))
