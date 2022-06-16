@@ -63,7 +63,7 @@ clientOptions | Object | Discord.JS Client Options | No | {}
 ipcOptions | Object{primary?: {}, worker?: {}} | Options for net-ipc | No | {}
 nodeArgs | string[] | Node arguments to pass to a cluster | No | []
 ipcTimeout | number | Timeout before we fail a request | No | 60000
-spawnTimeout | number | Timeout before we fail a cluster spawn | No | 20000 (multiplied by clusterShardCount internally)
+spawnTimeout | number | Timeout before we fail a cluster spawn | No | 60000 (multiplied by clusterShardCount internally)
 spawnDelay | number | Time to wait before spawning a new cluster | No | 5000
 retryFailed | boolean | If you want to respawn failed clusters on `Indomitable.spawn()` | No | true
 autoRestart | boolean | If you want to auto restart the shards that have been killed unintentionally | No | false
