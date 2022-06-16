@@ -8,6 +8,8 @@
 
 > The ShipGirl Project; ⓒ Azur Lane
 
+* Supports Discord.JS `v13` and `discord.js@dev`
+
 ## Installation
 
 * Stable
