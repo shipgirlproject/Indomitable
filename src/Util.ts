@@ -148,6 +148,11 @@ export function Chunk(original: any[], chunks: number): any[] {
     return array;
 }
 
+/**
+ * Wait for a specific amount of time (timeout)
+ * @param ms Time to wait in milliseconds
+ * @returns A promise that resolves in x seconds
+ */
 export function Delay(ms: number): Promise<void> {
     return new Promise(resolve => setTimeout(() => resolve(), ms).unref());
 }
