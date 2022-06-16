@@ -1,6 +1,6 @@
 {
   "name": "indomitable",
-  "version": "0.0.2",
+  "version": "0.0.3",
   "description": "A lightweight (the actual ship is heavy though), performat & powerful sharder for Discord.JS. Indomitable uses cluster module to evenly spread her weight (load) across your cores",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -26,6 +26,8 @@
     "discord sharder",
     "discord.js",
     "discord.js sharder",
+    "discordjs",
+    "discordjs sharder",
     "bot"
   ],
   "repository": {
@@ -41,9 +43,9 @@
   "dependencies": {
     "net-ipc": "^2.0.1"
   },
-  "peerDependencies": {
-    "discord.js": ">=13.0.0"
-  },
+    "peerDependencies": {
+      "discord.js": "~13 || ~14"
+    },
   "optionalDependencies": {
     "fast-zlib": "^2.0.1",
     "msgpackr": "^1.3.2"
