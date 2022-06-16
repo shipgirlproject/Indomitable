@@ -12,12 +12,14 @@ export class ClusterManager {
     public readonly manager: Indomitable;
     public readonly id: number;
     public readonly shards: number[];
+    public started: boolean;
     public worker?: Worker;
     public tickReady?: Function;
     constructor(options: ProcessOptions) {
         this.manager = options.manager;
         this.id = options.id;
         this.shards = options.shards;
+        this.started = false;
         this.worker = undefined;
         this.tickReady = undefined;
     }
@@ -51,6 +53,8 @@ export class ClusterManager {
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
         await Delay(this.manager.spawnDelay);
+        // ensures that autoRestart won't conflict with retryFailed
+        if (!this.started) this.started = true;
     }
 
     private cleanup(): void {
@@ -63,6 +67,7 @@ export class ClusterManager {
             const ms = this.manager.spawnTimeout * this.shards.length;
             const timeout = setTimeout(() => {
                 this.tickReady = undefined;
+                this.destroy();
                 reject(new Error(`The shard did not get ready in ${Math.round(ms / 1000)} seconds`));
             }, ms);
             this.tickReady = () => {

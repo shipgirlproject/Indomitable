@@ -110,7 +110,7 @@ export class Indomitable extends EventEmitter {
         this.cachedSessionInfo = undefined;
         if (!this.autoRestart) return;
         this.on(LibraryEvents.WORKER_EXIT, (_, signal, cluster) => {
-            if (signal === 'SIGKILL') return;
+            if (!cluster.started || signal === 'SIGKILL') return;
             cluster
                 .respawn()
                 .catch((error: unknown) => this.emit(LibraryEvents.ERROR, error as Error));
