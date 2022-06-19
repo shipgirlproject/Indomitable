@@ -41,8 +41,8 @@ export class ClusterManager {
      * @param signal Process exit signal
      */
     public destroy(signal: string = 'SIGTERM') {
-        // no need to call cleanup here, we always attach an exit listener to clean
         this.worker?.kill(signal);
+        this.cleanup(0, signal);
     }
 
     /**
@@ -51,7 +51,7 @@ export class ClusterManager {
      */
     public async respawn(delay: number = this.manager.spawnDelay) {
         this.destroy('SIGKILL');
-        if (delay) await Delay(delay);
+        await Delay(delay);
         await this.spawn();
     }
 
@@ -68,25 +68,26 @@ export class ClusterManager {
             ...process.env
         });
         this.worker.once('exit', (code, signal) => {
-            this.cleanup();
-            this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code} signal ${signal}`);
-            this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
+            this.cleanup(code, signal);
+            if (!this.manager.autoRestart) return;
+            this.manager.addToSpawnQueue(this);
         });
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
         this.manager.emit(LibraryEvents.WORKER_READY, this);
         this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, waiting for the cluster to be ready...`);
         await Delay(this.manager.spawnDelay);
-        // ensures that autoRestart won't conflict with retryFailed
         if (!this.started) this.started = true;
     }
 
     /**
      * Remove all listeners on attached worker process and free from memory
      */
-    private cleanup() {
+    private cleanup(code: number|null, signal: string|null) {
         this.worker?.removeAllListeners();
         this.worker = undefined;
+        this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || '???'} signal ${signal || '???'}`);
+        this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
     }
 
     /**
