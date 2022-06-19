@@ -26,7 +26,7 @@ export class ShardClient {
     public async start(token: string): Promise<void> {
         // @ts-ignore -- our own class
         const shardClientUtil = this.client.shard as ShardClientUtil;
-        await shardClientUtil.ipc.connection.connect();
+        await shardClientUtil.ipc.connection.connect({ clusterId: this.clusterId });
         this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));
         this.client.on('shardReady', (shardId: number) => this.send({ op: ClientEvents.SHARD_READY, data: { clusterId: this.clusterId, shardId }}));
         this.client.on('shardReconnecting', (shardId: number) => this.send({ op: ClientEvents.SHARD_RECONNECT, data: { clusterId: this.clusterId, shardId }}));
