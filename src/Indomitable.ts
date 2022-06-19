@@ -230,6 +230,7 @@ export class Indomitable extends EventEmitter {
         if (!Cluster.isPrimary) return;
         const cluster = this.clusters!.get(clusterId);
         if (!cluster) throw new Error('Invalid clusterId, or a cluster with this id doesn\'t exist');
+        this.emit(LibraryEvents.DEBUG, `Restarting Cluster ${cluster.id} ...`);
         await this.addToSpawnQueue(cluster);
     }
 
