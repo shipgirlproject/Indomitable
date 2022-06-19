@@ -28,7 +28,6 @@ export interface IndomitableOptions {
     ipcTimeout?: number;
     spawnTimeout?: number;
     spawnDelay?: number;
-    retryFailed?: boolean;
     autoRestart?: boolean;
     client: typeof Client;
     token: string;

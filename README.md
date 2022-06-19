@@ -34,6 +34,35 @@ const manager = new Indomitable({ client: Client, token })
 manager.spawn();
 ```
 
+> Basic usage with more Indomitable Options
+```js
+const { Indomitable } = require('indomitable');
+const { Client } = require('discord.js');
+const token = 'your_token';
+
+const options = {
+    // Processes to run
+    clusterCount: 2,
+    // Websocket shards to run
+    shardCount: 8,
+    // Discord.JS options
+    clientOptions: {
+        intents: [1 << 0] // Bitwise for GUILD intent only
+    },
+    // Auto restart processes that have been killed
+    autoRestart: true, // This defaults to false by default unless you specify it
+    // Your Discord.JS client
+    client: Client,
+    // Your bot token
+    token
+}
+
+const manager = new Indomitable(client)
+    .on('error', console.error);
+
+manager.spawn();
+```
+
 > Broadcasteval as one way to get data across shards
 ```js
 // Saya's note:
@@ -65,7 +94,6 @@ nodeArgs | string[] | Node arguments to pass to a cluster | No | []
 ipcTimeout | number | Timeout before we fail a request | No | 60000
 spawnTimeout | number | Timeout before we fail a cluster spawn | No | 60000 (multiplied by clusterShardCount internally)
 spawnDelay | number | Time to wait before spawning a new cluster | No | 5000
-retryFailed | boolean | If you want to respawn failed clusters on `Indomitable.spawn()` | No | true
 autoRestart | boolean | If you want to auto restart the shards that have been killed unintentionally | No | false
 client | Client | Your Discord.JS non modified OR modified client | Yes | None |
 token | strubg | The token of your bot | Yes | None |
