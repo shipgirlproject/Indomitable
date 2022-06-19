@@ -67,7 +67,7 @@ export class Primary {
 
     private connect(connection: Connection, payload: any): void {
         this.manager.emit(LibraryEvents.CONNECT, connection, payload);
-        if (!isNaN(payload.clusterId)) return;
+        if (isNaN(payload.clusterId)) return;
         const cluster = this.manager.clusters!.get(payload.clusterId as number);
         cluster!.ipcId = connection.id;
     }
