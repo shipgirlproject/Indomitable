@@ -71,4 +71,4 @@ client | Client | Your Discord.JS non modified OR modified client | Yes | None |
 token | strubg | The token of your bot | Yes | None |
 
 ### Made with ❤ by
-> @Sāya#0113 (https://github.com/Deivu/) | Inspired by Kurasuta
+> @Sāya#0113 (https://github.com/Deivu/)
