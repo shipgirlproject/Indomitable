@@ -74,8 +74,8 @@ export class ClusterManager {
         });
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
+        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, This cluster is ready!`);
         this.manager.emit(LibraryEvents.WORKER_READY, this);
-        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, waiting for the cluster to be ready...`);
         await Delay(this.manager.spawnDelay);
         if (!this.started) this.started = true;
     }
