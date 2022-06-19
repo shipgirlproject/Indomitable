@@ -55,15 +55,14 @@ export class Primary {
                 throw error;
             }
             return values;
-        } else {
-            return await Promise.all(
-                this.server.connections.map(connection =>
-                    connection
-                        .send(transportable)
-                        .catch((error: unknown) => this.server.emit(LibraryEvents.ERROR, error))
-                )
-            );
         }
+        return await Promise.all(
+            this.server.connections.map(connection =>
+                connection
+                    .send(transportable)
+                    .catch((error: unknown) => this.server.emit(LibraryEvents.ERROR, error))
+            )
+        );
     }
 
     private connect(connection: Connection, payload: any): void {
