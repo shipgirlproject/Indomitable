@@ -19,6 +19,7 @@ export class ClusterManager {
     public readonly id: number;
     public readonly shards: number[];
     public started: boolean;
+    public ipcId?: string;
     public worker?: Worker;
     public tickReady?: Function;
 
@@ -32,6 +33,7 @@ export class ClusterManager {
         this.id = options.id;
         this.shards = options.shards;
         this.started = false;
+        this.ipcId = undefined;
         this.worker = undefined;
         this.tickReady = undefined;
     }

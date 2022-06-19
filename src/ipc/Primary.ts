@@ -1,4 +1,4 @@
-import { Server } from 'net-ipc';
+import { Connection, Server } from 'net-ipc';
 import { Indomitable } from '../Indomitable';
 import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, PromiseOutcome, InternalError } from '../Util';
 
@@ -9,15 +9,34 @@ export class Primary {
         this.manager = manager;
         this.server = new Server({ ...{ path: 'indomitable' }, ...(this.manager.ipcOptions.primary || {}) })
             .on('ready', (address: string) => this.manager.emit(LibraryEvents.DEBUG, `Indomitable's IPC server is now ready, currently bound at address: ${address}`))
-            .on('connect', (...args) => this.manager.emit(LibraryEvents.CONNECT, ...args))
             .on('disconnect', (...args) => this.manager.emit(LibraryEvents.DISCONNECT, ...args))
             .on('close', (...args) => this.manager.emit(LibraryEvents.CLOSE, ...args))
+            .on('connect', (connection, payload) => this.connect(connection, payload))
             .on('message', message => this.message(message))
-            .on('request', (message, response) => this.message(message, response));
-        if (this.manager.listeners(LibraryEvents.ERROR).length >= 1)
-            this.server.on('error', (...args) => this.manager.emit(LibraryEvents.ERROR, ...args));
-        else
-            this.server.on('error', () => null);
+            .on('request', (message, response) => this.message(message, response))
+            .on('error', (...args) => {
+                if (this.manager.listeners(LibraryEvents.ERROR).length === 0) return;
+                this.manager.emit(LibraryEvents.ERROR, ...args);
+            });
+    }
+
+    public async send(id: number, transportable: Transportable): Promise<any|void> {
+        const cluster = this.manager.clusters!.get(id);
+        if (!cluster || !cluster.ipcId) throw new Error('This cluster is not yet ready, or have not yet received it\'s id');
+        const connection = this.manager.ipc!.server.connections.find(connection => cluster.ipcId === connection.id);
+        if (!connection) throw new Error('This cluster connection may have changed it\'s id and is not yet updated on our side');
+        const repliable = transportable.repliable ?? false;
+        if (repliable) {
+            const result: any = await connection.request(transportable, this.manager.ipcTimeout);
+            if (result?.internal && result.error) {
+                const error = new Error(result.value.reason || 'Unspecified reason');
+                error.stack = result.value.stack;
+                error.name = result.value.name;
+                throw error;
+            }
+            return result;
+        }
+        return await connection.send(transportable);
     }
 
     public async broadcast(transportable: Transportable): Promise<any|void> {
@@ -36,8 +55,22 @@ export class Primary {
                 throw error;
             }
             return values;
-        } else
-            return this.server.broadcast(transportable);
+        } else {
+            return await Promise.all(
+                this.server.connections.map(connection =>
+                    connection
+                        .send(transportable)
+                        .catch((error: unknown) => this.server.emit(LibraryEvents.ERROR, error))
+                )
+            );
+        }
+    }
+
+    private connect(connection: Connection, payload: any): void {
+        this.manager.emit(LibraryEvents.CONNECT, connection, payload);
+        if (!isNaN(payload.clusterId)) return;
+        const cluster = this.manager.clusters!.get(payload.clusterId as number);
+        cluster!.ipcId = connection.id;
     }
 
     private async message(data: Transportable, response?: (data: any) => Promise<void>): Promise<void> {

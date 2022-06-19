@@ -32,8 +32,8 @@ export class Worker {
                 throw error;
             }
             return result;
-        } else
-            return this.connection.send(transportable);
+        }
+        return await this.connection.send(transportable);
     }
 
     private async message(data: Transportable, response?: (data: any) => Promise<void>): Promise<void> {

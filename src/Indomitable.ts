@@ -191,6 +191,15 @@ export class Indomitable extends EventEmitter {
     }
 
     /**
+     * Gets how many clusters are waiting to be spawned
+     * @returns Number of clusters in queue
+     */
+    get inSpawnQueueCount(): number {
+        if (!Cluster.isPrimary) return 0;
+        return this.spawnQueue!.length;
+    }
+
+    /**
      * Spawn a new ShardClient if this instance is a child process, or start a new cluster and IPC server if this instance is the primary process
      * @returns A promise that resolves to void
      */
