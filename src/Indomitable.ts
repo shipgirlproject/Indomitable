@@ -239,13 +239,13 @@ export class Indomitable extends EventEmitter {
 
     /**
      * Restart specified cluster if this instance is the primary process
-     * @param clusterId ID of cluster to restart
+     * @param clusterId Id of cluster to restart
      * @returns A promise that resolves to void
      */
     public async restart(clusterId: number): Promise<void> {
         if (!Cluster.isPrimary) return;
         const cluster = this.clusters!.get(clusterId);
-        if (!cluster) throw new Error('Invalid clusterId, or a cluster with this id doesn\'t exist');
+        if (!cluster) throw new Error(`Invalid clusterId, or a cluster with this id doesn\'t exist, received id ${clusterId}`);
         await this.addToSpawnQueue(cluster);
     }
 
@@ -259,12 +259,20 @@ export class Indomitable extends EventEmitter {
         await this.addToSpawnQueue(...this.clusters!.values());
     }
 
+    /**
+     * Adds a cluster to spawn queue
+     * @internal
+     */
     public addToSpawnQueue(...clusters: ClusterManager[]) {
         if (!Cluster.isPrimary) return;
         this.spawnQueue!.push(...clusters);
         return this.processQueue();
     }
 
+    /**
+     * Adds a cluster to spawn queue
+     * @internal
+     */
     private async processQueue(): Promise<void> {
         if (this.busy || !this.spawnQueue!.length) return;
         this.busy = true;
