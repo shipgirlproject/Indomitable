@@ -93,7 +93,7 @@ export class Primary {
                         if (cluster?.tickReady) cluster.tickReady();
                         break;
                     }
-                    case ClientEvents.EVAL:
+                    case ClientEvents.EVAL: {
                         // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
                         const data = await this.broadcast({
                             content,
@@ -101,6 +101,12 @@ export class Primary {
                         });
                         await message.reply(data);
                         break;
+                    }
+                    case ClientEvents.SESSION_INFO: {
+                        if (content.data.update)
+                            this.manager.cachedSession = await this.manager.fetchSessions();
+                        await message.reply(this.manager.cachedSession);
+                    }
                     case ClientEvents.RESTART:
                         await this.manager.restart(content.data.clusterId);
                         break;

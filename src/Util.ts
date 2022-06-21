@@ -7,6 +7,7 @@ export enum ClientEvents {
     EVAL = 'eval',
     RESTART = 'restart',
     RESTART_ALL = 'restartAll',
+    SESSION_INFO = 'sessionInfo',
     READY = 'ready',
     SHARD_READY = 'shardReady',
     SHARD_RECONNECT = 'shardReconnect',
