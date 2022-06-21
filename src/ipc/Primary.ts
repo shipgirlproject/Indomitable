@@ -1,4 +1,4 @@
-import { Connection, Server } from 'net-ipc';
+import { Client, Connection, Server } from 'net-ipc';
 import { Indomitable } from '../Indomitable';
 import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, PromiseOutcome, InternalError } from '../Util';
 
@@ -22,9 +22,9 @@ export class Primary {
 
     public async send(id: number, transportable: Transportable): Promise<any|void> {
         const cluster = this.manager.clusters!.get(id);
-        if (!cluster || !cluster.ipcId) throw new Error('This cluster is not yet ready, or have not yet received it\'s id');
+        if (!cluster) throw new Error('This cluster is not yet ready / not yet in cache');
         const connection = this.manager.ipc!.server.connections.find(connection => cluster.ipcId === connection.id);
-        if (!connection) throw new Error('This cluster connection may have changed it\'s id and is not yet updated on our side');
+        if (!connection) throw new Error(`The cluster ipcId didn\'t match any connection id. Current cluster ipcId: ${cluster.ipcId}`);
         const repliable = transportable.repliable ?? false;
         if (repliable) {
             const result: any = await connection.request(transportable, this.manager.ipcTimeout);
@@ -66,10 +66,12 @@ export class Primary {
     }
 
     private connect(connection: Connection, payload: any): void {
+        if (payload.internal) {
+            this.manager.emit(LibraryEvents.DEBUG, `Cluster ${payload.clusterId} ipc is now connected. Assigned Id: ${connection.id}`);
+            const cluster = this.manager.clusters!.get(Number(payload.clusterId));
+            cluster!.ipcId = connection.id;
+        }
         this.manager.emit(LibraryEvents.CONNECT, connection, payload);
-        if (isNaN(payload.clusterId)) return;
-        const cluster = this.manager.clusters!.get(payload.clusterId as number);
-        cluster!.ipcId = connection.id;
     }
 
     private async message(data: Transportable, response?: (data: any) => Promise<void>): Promise<void> {
@@ -86,10 +88,11 @@ export class Primary {
                 try {
                     const content = message.content as InternalEvents;
                     switch(content.op) {
-                    case ClientEvents.READY:
+                    case ClientEvents.READY: {
                         const cluster = this.manager.clusters!.get(content.data.clusterId);
                         if (cluster?.tickReady) cluster.tickReady();
                         break;
+                    }
                     case ClientEvents.EVAL:
                         // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
                         const data = await this.broadcast({
