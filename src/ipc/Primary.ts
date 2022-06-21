@@ -106,6 +106,7 @@ export class Primary {
                         if (content.data.update)
                             this.manager.cachedSession = await this.manager.fetchSessions();
                         await message.reply(this.manager.cachedSession);
+                        break;
                     }
                     case ClientEvents.RESTART:
                         await this.manager.restart(content.data.clusterId);
@@ -118,7 +119,7 @@ export class Primary {
                         this.manager.emit(content.op, content.data);
                     }
                 } catch (error: any) {
-                    if (!message.repliable) throw error as any;
+                    if (!message.repliable) throw error as Error;
                     const internalError: InternalError = {
                         internal: true,
                         error: true,

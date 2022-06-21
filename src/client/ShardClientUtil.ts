@@ -89,7 +89,7 @@ export class ShardClientUtil extends EventEmitter {
             data: { update },
             internal: true
         };
-        return this.ipc.send({ content });
+        return this.ipc.send({ content, repliable: true });
     }
 
     /**
