@@ -67,11 +67,11 @@ export class Primary {
 
     private connect(connection: Connection, payload: any): void {
         if (payload.internal) {
-            this.manager.emit(LibraryEvents.DEBUG, `Cluster ${payload.clusterId} ipc is now connected. Assigned Id: ${connection.id}`);
-            const cluster = this.manager.clusters!.get(Number(payload.clusterId));
-            cluster!.ipcId = connection.id;
+            const cluster = this.manager.clusters!.get(Number(payload.clusterId))!;
+            cluster.ipcId = connection.id;
+            this.manager.emit(LibraryEvents.DEBUG, `Cluster ${cluster.id} ipc is now connected. Assigned Id: ${cluster.ipcId}`);
         }
-        this.manager.emit(LibraryEvents.CONNECT, connection, payload);
+        setImmediate(() => this.manager.emit(LibraryEvents.CONNECT, connection, payload)).unref();
     }
 
     private async message(data: Transportable, response?: (data: any) => Promise<void>): Promise<void> {
