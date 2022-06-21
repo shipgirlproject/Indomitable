@@ -1,4 +1,4 @@
-import { Client, Connection, Server } from 'net-ipc';
+import { Connection, Server } from 'net-ipc';
 import { Indomitable } from '../Indomitable';
 import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, PromiseOutcome, InternalError } from '../Util';
 
