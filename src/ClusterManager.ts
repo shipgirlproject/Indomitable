@@ -5,7 +5,7 @@ import { Delay, LibraryEvents } from './Util';
 /**
  * Options for child processes
  */
-export interface ProcessOptions {
+export interface ClusterManagerOptions {
     id: number;
     shards: number[];
     manager: Indomitable;
@@ -28,7 +28,7 @@ export class ClusterManager {
      * @param options.shards An array of numbers representing the shards that this cluster controls
      * @param options.manager Indomitable instance that spawned this cluster
      */
-    constructor(options: ProcessOptions) {
+    constructor(options: ClusterManagerOptions) {
         this.manager = options.manager;
         this.id = options.id;
         this.shards = options.shards;

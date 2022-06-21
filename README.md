@@ -20,6 +20,10 @@
 
 > `npm install https://github.com/Deivu/Indomitable.git#master`
 
+## Documentation
+
+🔗 https://deivu.github.io/Indomitable/index.html
+
 ## Example Usage
 
 > Basic usage
@@ -81,7 +85,7 @@ client.shard
 
 * For fastest performance possible, install the optional dependency **MessagePack** `npm i --save msgpackr`
 
-* Docs like on [Shoukaku](https://github.com/Deivu/Shoukaku) soon:tm:
+* Your Discord.JS Client ShardClientUtil is replaced with Indomitable's ShardClientUtil. Refer to our docs for documentation 🔗 https://deivu.github.io/Indomitable/classes/client_ShardClientUtil.ShardClientUtil.html
 
 ### Indomitable Options
  Option | Type | Description | Required | Default |
