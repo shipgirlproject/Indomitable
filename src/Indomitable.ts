@@ -3,7 +3,7 @@ import { ClientOptions, Connection, ServerOptions } from 'net-ipc';
 import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './ClusterManager';
-import { Primary } from './ipc/Primary';
+import { Primary as PrimaryIpc } from './ipc/Primary';
 import EventEmitter from 'node:events';
 import Cluster from 'node:cluster';
 import Os from 'node:os';
@@ -140,7 +140,7 @@ export declare interface Indomitable {
 export class Indomitable extends EventEmitter {
     public clusterCount: number|'auto';
     public shardCount: number|'auto';
-    public cachedSessionInfo?: SessionObject;
+    public cachedSession?: SessionObject;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly ipcOptions: IpcOptions;
     public readonly nodeArgs: string[];
@@ -150,7 +150,7 @@ export class Indomitable extends EventEmitter {
     public readonly autoRestart: boolean;
     public readonly client: typeof Client;
     public readonly clusters?: Map<number, ClusterManager>;
-    public readonly ipc?: Primary;
+    public readonly ipc?: PrimaryIpc;
     private readonly spawnQueue?: ClusterManager[];
     private readonly token: string;
     private busy?: boolean;
@@ -183,10 +183,10 @@ export class Indomitable extends EventEmitter {
         this.token = options.token;
         if (!Cluster.isPrimary) return;
         this.clusters = new Map();
-        this.ipc = new Primary(this);
+        this.ipc = new PrimaryIpc(this);
         this.spawnQueue = [];
         this.busy = false;
-        this.cachedSessionInfo = undefined;
+        this.cachedSession = undefined;
     }
 
     /**
@@ -196,6 +196,14 @@ export class Indomitable extends EventEmitter {
     get inSpawnQueueCount(): number {
         if (!Cluster.isPrimary) return 0;
         return this.spawnQueue!.length;
+    }
+
+    /**
+     * Gets the current session info of the bot token Indomitable currently handles
+     * @returns Session Info
+     */
+    public fetchSessions(): Promise<SessionObject> {
+        return FetchSessions(this.token);
     }
 
     /**
@@ -212,8 +220,8 @@ export class Indomitable extends EventEmitter {
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
         if (typeof this.shardCount !== 'number') {
-            this.cachedSessionInfo = await FetchSessions(this.token);
-            this.shardCount = this.cachedSessionInfo.shards;
+            this.cachedSession = await this.fetchSessions();
+            this.shardCount = this.cachedSession.shards;
         }
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;
@@ -232,19 +240,18 @@ export class Indomitable extends EventEmitter {
     /**
      * Restart specified cluster if this instance is the primary process
      * @param clusterId ID of cluster to restart
-     * @returns void
+     * @returns A promise that resolves to void
      */
     public async restart(clusterId: number): Promise<void> {
         if (!Cluster.isPrimary) return;
         const cluster = this.clusters!.get(clusterId);
         if (!cluster) throw new Error('Invalid clusterId, or a cluster with this id doesn\'t exist');
-        this.emit(LibraryEvents.DEBUG, `Restarting Cluster ${cluster.id}...`);
         await this.addToSpawnQueue(cluster);
     }
 
     /**
      * Restart all clusters if this instance is the primary process
-     * @returns void
+     * @returns A promise that resolves to void
      */
     public async restartAll(): Promise<void>  {
         if (!Cluster.isPrimary) return;
@@ -274,7 +281,7 @@ export class Indomitable extends EventEmitter {
         } catch (error: unknown) {
             this.emit(LibraryEvents.ERROR, error as Error);
             if (cluster! && this.autoRestart) {
-                this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing Shard(s) => [ ${cluster.shards.join(', ')} ]. Requeuing...`);
+                this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Requeuing...`);
                 if (!this.spawnQueue!.some(queue => queue.id === cluster.id)) this.spawnQueue!.push(cluster);
             }
         } finally {

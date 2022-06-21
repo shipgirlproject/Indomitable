@@ -52,6 +52,7 @@ export class ClusterManager {
      * @param delay Time to wait before restarting worker process
      */
     public async respawn(delay: number = this.manager.spawnDelay) {
+        this.manager.emit(LibraryEvents.DEBUG, `Restarting Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
         this.destroy('SIGKILL');
         await Delay(delay);
         await this.spawn();
@@ -76,7 +77,7 @@ export class ClusterManager {
         });
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
-        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id}, This cluster is ready!`);
+        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)!`);
         this.manager.emit(LibraryEvents.WORKER_READY, this);
         await Delay(this.manager.spawnDelay);
         if (!this.started) this.started = true;
@@ -88,12 +89,12 @@ export class ClusterManager {
     private cleanup(code: number|null, signal: string|null) {
         this.worker?.removeAllListeners();
         this.worker = undefined;
-        this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || '???'} signal ${signal || '???'}`);
+        this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
     }
 
     /**
-     * Time to wait before reporting a fail when spawning a new shard
+     * Waits for this cluster to be ready
      * @returns A promise that resolves to void
      * @internal
      */
@@ -103,7 +104,7 @@ export class ClusterManager {
             const timeout = setTimeout(() => {
                 this.tickReady = undefined;
                 this.destroy();
-                reject(new Error(`The shard did not get ready in ${Math.round(ms / 1000)} seconds`));
+                reject(new Error(`Cluster ${this.id} did not get ready in ${Math.round(ms / 1000)} seconds`));
             }, ms);
             this.tickReady = () => {
                 clearTimeout(timeout);
