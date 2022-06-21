@@ -103,7 +103,7 @@ export class Primary {
                         break;
                     }
                     case ClientEvents.SESSION_INFO: {
-                        if (content.data.update)
+                        if (content.data.update || !this.manager.cachedSession)
                             this.manager.cachedSession = await this.manager.fetchSessions();
                         await message.reply(this.manager.cachedSession);
                         break;
