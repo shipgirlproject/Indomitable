@@ -234,6 +234,7 @@ export class Indomitable extends EventEmitter {
             const cluster = new ClusterManager({ id, shards: chunk, manager: this });
             this.clusters!.set(id, cluster);
         }
+        this.ipc!.server.setMaxListeners(this.clusters!.size * 2);
         await this.addToSpawnQueue(...this.clusters!.values());
     }
 
