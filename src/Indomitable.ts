@@ -291,7 +291,7 @@ export class Indomitable extends EventEmitter {
             this.emit(LibraryEvents.ERROR, error as Error);
             if (cluster! && this.autoRestart) {
                 this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Requeuing...`);
-                if (!this.spawnQueue!.some(queue => queue.id === cluster.id)) this.spawnQueue!.push(cluster);
+                if (!this.spawnQueue!.includes(cluster)) this.spawnQueue!.push(cluster);
             }
         } finally {
             this.busy = false;
