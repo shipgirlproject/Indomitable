@@ -44,7 +44,6 @@ export class ClusterManager {
      */
     public destroy(signal: string = 'SIGTERM') {
         this.worker?.kill(signal);
-        this.manager.ipc!.server.connections.find(connection => this.ipcId === connection.id)?.close('Restarting', false);
         this.cleanup(0, signal);
     }
 
@@ -88,6 +87,7 @@ export class ClusterManager {
      * Remove all listeners on attached worker process and free from memory
      */
     private cleanup(code: number|null, signal: string|null) {
+        this.manager.ipc!.server.connections.find(connection => this.ipcId === connection.id)?.close('Restarting', false);
         this.worker?.removeAllListeners();
         this.worker = undefined;
         this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
