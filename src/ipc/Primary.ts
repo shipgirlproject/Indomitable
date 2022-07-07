@@ -29,9 +29,9 @@ export class Primary {
         if (repliable) {
             const result: any = await connection.request(transportable, this.manager.ipcTimeout);
             if (result?.internal && result.error) {
-                const error = new Error(result.value.reason || 'Unspecified reason');
-                error.stack = result.value.stack;
-                error.name = result.value.name;
+                const error = new Error(result.reason || 'Unspecified reason');
+                error.stack = result.stack;
+                error.name = result.name;
                 throw error;
             }
             return result;
