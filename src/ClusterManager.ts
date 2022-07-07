@@ -39,6 +39,14 @@ export class ClusterManager {
     }
 
     /**
+     * Shortcut to get the ipc connection for this cluster manager
+     * @returns The connection
+     */
+    get ipc() {
+        return this.manager.ipc!.server.connections.find(connection => this.ipcId === connection.id);
+    }
+
+    /**
      * Destroy associated worker process
      * @param signal Process exit signal
      */
@@ -87,7 +95,7 @@ export class ClusterManager {
      * Remove all listeners on attached worker process and free from memory
      */
     private cleanup(code: number|null, signal: string|null) {
-        this.manager.ipc!.server.connections.find(connection => this.ipcId === connection.id)?.close('Restarting', false);
+        this.ipc?.close('Restarting', false);
         this.worker?.removeAllListeners();
         this.worker = undefined;
         this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
