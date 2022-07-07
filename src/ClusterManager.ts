@@ -44,6 +44,7 @@ export class ClusterManager {
      */
     public destroy(signal: string = 'SIGTERM') {
         this.worker?.kill(signal);
+        this.manager.ipc!.server.connections.find(connection => this.ipcId === connection.id)?.close('Restarting', false);
         this.cleanup(0, signal);
     }
 
