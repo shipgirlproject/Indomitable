@@ -1,7 +1,7 @@
 {
   "name": "indomitable",
   "version": "1.0.1",
-  "description": "A lightweight (the actual ship is heavy though), performat & powerful sharder for Discord.JS. Indomitable uses cluster module to evenly spread her weight (load) across your cores",
+  "description": "A lightweight (the actual ship is heavy though), performat, powerful & no depedency sharder for Discord.JS",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
