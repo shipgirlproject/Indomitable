@@ -1,7 +1,6 @@
 ## Indomitable
 
-> A lightweight (the actual ship is heavy though), performat & powerful sharder for Discord.JS. Indomitable uses cluster module to evenly spread her weight (load) across your cores
-
+> A lightweight (the actual ship is heavy though), performat, powerful & no depedency sharder for Discord.JS
 <p align="center">
     <img src="https://cdn.donmai.us/original/9b/cf/__indomitable_azur_lane_drawn_by_kincora__9bcf19b2f822ce75ea707e5047882d6a.png"> 
 </p>
@@ -9,6 +8,20 @@
 > The ShipGirl Project; ⓒ Azur Lane
 
 * Supports Discord.JS `v13` and `discord.js@dev`
+
+## Features
+
+* Fast
+
+* Lightweight
+
+* Reliable
+
+* Promisified IPC (Bi-directional)
+
+* No dependencies (v2 onwards)
+
+* Very cute (and lazy like the Kaiju Princess! *if you know you know*)
 
 ## Installation
 
@@ -77,15 +90,79 @@ client.shard
     .then(console.log);
 ```
 
+> Example of a very basic ipc comunication (non repliable)
+```js
+// Primary Process
+indomitable.on('message', message => {
+    if (message.content.op === 'something you do') {
+        doSomething();
+    }
+});
+// Worker Process (your client most likely)
+client.shard.send({ content: { op: 'something you do' } })
+    .catch(console.error);
+```
+
+> Example of a very basic ipc comunication (repliable)
+```js
+// Primary Process
+indomitable.on('message', message => {
+    if (message.content.op === 'something') {
+        if (!message.repliable) return; // check if the message is repliable just incase, though it won't error even it is not
+        const someValue = doSomething();
+        message.reply(someValue);
+    }
+});
+// Worker Process (your client most likely)
+client.shard.send({ content: { op: 'something' }, repliable: true })
+    .then(console.log)
+    .catch(console.error);
+```
+
+> You could also do it reversely (main process asking data from clusters instead of clusters asking to main process)
+```js
+// Primary Process
+// send to specific cluster 
+indomitable.ipc.send(0, { content: { op: 'nya' } })
+    .catch(console.error);
+// send to specific cluster with repliable
+indomitable.ipc.send(0, { content: { op: 'something' }, repliable: true })
+    .catch(console.error);
+// broadcast to all clusters
+indomitable.ipc.broadcast({ content: { op: 'meow' } })
+    .catch(console.error);
+// broadcast to all clusters with repliable is possible as well
+indomitable.ipc.broadcast({ content: { op: 'meow' }, repliable: true })
+    .catch(console.error);
+
+// Worker Process (your client most likely)
+client.shard.on('message', message => {
+    if (message.content.op === 'something') {
+        if (!message.repliable) return;
+        const someValue = doSomething();
+        message.reply(someValue);
+    }
+    if (message.content.op === 'nya') {
+        doSomething();
+    }
+    if (message.content.op === 'meow') {
+        if (!message.repliable) return;
+        message.reply('nya');
+    }
+})
+```
+
 ### Notes
 
 * You don't need to call `client.login('token');` yourself, Indomitable will call it for you.
 
 * Extended clients that extend from discord.js client will work, as long as you use `client.login('token');` to get your bot running
 
-* For fastest performance possible, install the optional dependency **MessagePack** `npm i --save msgpackr`
-
 * Your Discord.JS Client ShardClientUtil is replaced with Indomitable's ShardClientUtil. Refer to our docs for documentation 🔗 https://deivu.github.io/Indomitable/classes/client_ShardClientUtil.ShardClientUtil.html
+
+### Other Links
+
+[Support](https://discord.gg/FVqbtGu) (#Development)
 
 ### Indomitable Options
  Option | Type | Description | Required | Default |
