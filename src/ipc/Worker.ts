@@ -50,14 +50,14 @@ export class Worker {
             if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
                 return await this.message(data as RawIpcMessage);
             if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
-                return await this.promise(data as RawIpcMessage);
+                return this.promise(data as RawIpcMessage);
         } catch (error: unknown) {
             // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
             this.shard.client.emit(LibraryEvents.ERROR, error as Error);
         }
     }
 
-    private async promise(data: RawIpcMessage): Promise<boolean|void> {
+    private promise(data: RawIpcMessage): void {
         const id = data.id as string;
         const promise = this.promises.get(id);
         if (!promise) return;
