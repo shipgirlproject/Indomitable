@@ -92,50 +92,39 @@ export class Main {
         };
         if (!message.content.internal)
             return this.manager.emit(LibraryEvents.MESSAGE, data);
+        // internal error handling
         try {
-            // internal error handling
-            try {
-                const content = message.content as InternalEvents;
-                switch(content.op) {
-                case ClientEvents.READY: {
-                    const cluster = this.manager.clusters!.get(content.data.clusterId);
-                    if (cluster?.tickReady) cluster.tickReady();
-                    break;
-                }
-                case ClientEvents.EVAL: {
-                    // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
-                    const data = await this.manager.ipc!.broadcast({
-                        content,
-                        repliable: true
-                    });
-                    message.reply(data);
-                    break;
-                }
-                case ClientEvents.SESSION_INFO: {
-                    if (content.data.update || !this.manager.cachedSession)
-                        this.manager.cachedSession = await this.manager.fetchSessions();
-                    message.reply(this.manager.cachedSession);
-                    break;
-                }
-                case ClientEvents.RESTART:
-                    await this.manager.restart(content.data.clusterId);
-                    break;
-                case ClientEvents.RESTART_ALL:
-                    await this.manager.restartAll();
-                    break;
-                default:
-                    // shardReconect, shardResume etc
-                    this.manager.emit(content.op, content.data);
-                }
-            } catch (error: any) {
-                if (!message.repliable) throw error as Error;
-                message.reply({
-                    internal: true,
-                    error: true,
-                    name: error.name,
-                    reason: error.reason,
-                    stack: error.stack
-                } as InternalError);
+            const content = message.content as InternalEvents;
+            switch(content.op) {
+            case ClientEvents.READY: {
+                const cluster = this.manager.clusters!.get(content.data.clusterId);
+                if (cluster?.tickReady) cluster.tickReady();
+                break;
+            }
+            case ClientEvents.EVAL: {
+                // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
+                const data = await this.manager.ipc!.broadcast({
+                    content,
+                    repliable: true
+                });
+                message.reply(data);
+                break;
+            }
+            case ClientEvents.SESSION_INFO: {
+                if (content.data.update || !this.manager.cachedSession)
+                    this.manager.cachedSession = await this.manager.fetchSessions();
+                message.reply(this.manager.cachedSession);
+                break;
+            }
+            case ClientEvents.RESTART:
+                await this.manager.restart(content.data.clusterId);
+                break;
+            case ClientEvents.RESTART_ALL:
+                await this.manager.restartAll();
+                break;
+            default:
+                // shardReconect, shardResume etc
+                this.manager.emit(content.op, content.data);
             }
         } catch (error: any) {
             if (!message.repliable) throw error as Error;
