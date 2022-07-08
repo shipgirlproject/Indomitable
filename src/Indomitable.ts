@@ -127,8 +127,6 @@ export class Indomitable extends EventEmitter {
      * @param [options.clusterCount=auto] The amount of clusters to spawn. Expects a number or 'auto'
      * @param [options.shardCount=auto] The number of shards to create. Expects a number or 'auto'
      * @param [options.clientOptions] Options for the Discord.js client
-     * @param [options.ipcOptions.primary] Options for the net-ipc server running on the primary process
-     * @param [options.ipcOptions.worker] Options for the net-ipc client running on each worker process
      * @param [options.nodeArgs] An array of arguments for each child process
      * @param [options.ipcTimeout] Time to wait before reporting a failed IPC connection
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
