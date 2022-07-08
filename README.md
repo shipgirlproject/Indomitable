@@ -21,7 +21,7 @@
 
 * No dependencies (v2 onwards)
 
-* Very cute (and lazy like the Kaiju Princess! *if you know you know*)
+* Very cute (and lazy like the Kaiju Princess! *If you know, you know*)
 
 ## Installation
 
