@@ -37,18 +37,18 @@ export class Worker {
             if (!id) return resolve(undefined);
             const timeout = setTimeout(() => {
                 this.promises.delete(id);
-                reject(new Error('This promise timed out'));
+                reject(new Error('This request timed out'));
             }, this.manager.ipcTimeout).unref();
             this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
         });
     }
 
-    private async handle(data: Serializable): Promise<boolean|void> {
+    private handle(data: Serializable): boolean|void {
         try {
             if (!(data as any).internal)
                 return this.manager.emit(LibraryEvents.MESSAGE, data);
             if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
-                return await this.message(data as RawIpcMessage);
+                return this.message(data as RawIpcMessage);
             if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
                 return this.promise(data as RawIpcMessage);
         } catch (error: unknown) {
@@ -64,7 +64,7 @@ export class Worker {
         this.promises.delete(id);
         clearTimeout(promise.timeout);
         if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unspecified reason');
+            const error = new Error(data.content.reason || 'Unknown error reason');
             error.stack = data.content.stack;
             error.name = data.content.name;
             return promise.reject(error);
@@ -72,7 +72,7 @@ export class Worker {
         promise.resolve(data.content);
     }
 
-    private async message(data: RawIpcMessage): Promise<boolean|void> {
+    private message(data: RawIpcMessage): boolean|void {
         const reply = (content: any) => {
             if (!data.id) return;
             const response: RawIpcMessage = {

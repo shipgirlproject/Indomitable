@@ -91,7 +91,7 @@ export class ClusterManager {
      * Remove all listeners on attached worker process and free from memory
      */
     private cleanup(code: number|null, signal: string|null) {
-        this.ipc.flush();
+        this.ipc.flush(`Cluster exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.worker?.removeAllListeners();
         this.worker = undefined;
         if (!this.worker) return;
