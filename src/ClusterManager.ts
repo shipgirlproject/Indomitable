@@ -74,6 +74,7 @@ export class ClusterManager {
         });
         this.worker
             .on('message', message => this.ipc.handle(message))
+            .on('error', error => this.manager.emit(LibraryEvents.ERROR, error as Error))
             .once('exit', (code, signal) => {
                 this.cleanup(code, signal);
                 if (!this.manager.autoRestart) return;
