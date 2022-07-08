@@ -25,7 +25,7 @@ export class Main {
         for (const promise of this.promises.values()) promise.reject(error);
     }
 
-    public async send(transportable: Transportable): Promise<any|undefined> {
+    public send(transportable: Transportable): Promise<any|undefined> {
         return new Promise((resolve, reject) => {
             if (!this.cluster.worker) return reject(new Error('Cluster not yet ready'));
             const repliable = transportable.repliable || false;
