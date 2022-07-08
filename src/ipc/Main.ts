@@ -20,8 +20,8 @@ export class Main {
         return this.promises.size;
     }
 
-    public flush(): void {
-        const error = new Error('Cluster clean up initiated');
+    public flush(reason: string): void {
+        const error = new Error(reason);
         for (const promise of this.promises.values()) promise.reject(error);
     }
 
@@ -40,7 +40,7 @@ export class Main {
             if (!id) return resolve(undefined);
             const timeout = setTimeout(() => {
                 this.promises.delete(id);
-                reject(new Error('This promise timed out'));
+                reject(new Error('This request timed out'));
             }, this.manager.ipcTimeout).unref();
             this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
         });
@@ -66,7 +66,7 @@ export class Main {
         this.promises.delete(id);
         clearTimeout(promise.timeout);
         if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unspecified reason');
+            const error = new Error(data.content.reason || 'Unknown error reason');
             error.stack = data.content.stack;
             error.name = data.content.name;
             return promise.reject(error);
