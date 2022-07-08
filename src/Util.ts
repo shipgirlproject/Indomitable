@@ -36,13 +36,11 @@ export enum LibraryEvents {
 }
 
 /**
- * Values returned from a Promise
- * @see {@link Promise}
+ * Type for raw ipc message
  */
-export interface PromiseOutcome {
-	status: 'fulfilled' | 'rejected';
-	value?: any;
-	reason?: any;
+export enum RawIpcMessageType {
+    MESSAGE = 'message',
+    RESPONSE = 'response'
 }
 
 /**
@@ -74,10 +72,29 @@ export interface Transportable {
 }
 
 /**
+ * Internal promise data tracking
+ */
+export interface InternalPromise {
+    resolve: Function;
+    reject: Function;
+    timeout: NodeJS.Timeout;
+}
+
+/**
+ * Data structure representing internal IPC data
+ */
+export interface RawIpcMessage {
+    id: string|null;
+    content: any;
+    internal: true;
+    type: RawIpcMessageType
+}
+
+/**
  * Data structure representing a IPC message
  */
 export interface Message {
-    reply: (data: any) => Promise<void>;
+    reply: (data: any) => void;
     content: any;
     repliable: boolean;
 }

@@ -1,20 +1,12 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
-import { ClientOptions, Connection, ServerOptions } from 'net-ipc';
 import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
+import { MainUtil as PrimaryIpc } from './ipc/MainUtil';
 import { ClusterManager } from './ClusterManager';
-import { Primary as PrimaryIpc } from './ipc/Primary';
 import EventEmitter from 'node:events';
 import Cluster from 'node:cluster';
 import Os from 'node:os';
 
-/**
- * Options to control IPC behavior
- */
-export interface IpcOptions {
-    primary?: ServerOptions;
-    worker?: ClientOptions
-}
 
 /**
  * Options to control Indomitable behavior
@@ -23,7 +15,6 @@ export interface IndomitableOptions {
     clusterCount?: number|'auto';
     shardCount?: number|'auto';
     clientOptions?: DiscordJsClientOptions;
-    ipcOptions?: IpcOptions;
     nodeArgs?: string[];
     ipcTimeout?: number;
     spawnTimeout?: number;
@@ -47,25 +38,10 @@ export declare interface Indomitable {
      */
     on(event: 'debug', listener: (message: string) => void): this;
     /**
-     * Emmited when an IPC connection is established
-     * @eventProperty
-     */
-    on(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
-    /**
-     * Emmited when an IPC connection is disconencted
-     * @eventProperty
-     */
-    on(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
-    /**
-     * Emmited when an IPC connection is closed
-     * @eventProperty
-     */
-    on(event: 'close', listener: () => void): this;
-    /**
      * Emmited when an IPC message is recieved
      * @eventProperty
      */
-    on(event: 'message', listener: (message: Message) => void): this;
+    on(event: 'message', listener: (message: Message|unknown) => void): this;
     /**
      * Emitted when an error occurs
      * @eventProperty
@@ -107,10 +83,7 @@ export declare interface Indomitable {
      */
     on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'debug', listener: (message: string) => void): this;
-    once(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
-    once(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
-    once(event: 'close', listener: () => void): this;
-    once(event: 'message', listener: (message: Message) => void): this;
+    once(event: 'message', listener: (message: Message|unknown) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
     once(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
     once(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
@@ -120,10 +93,7 @@ export declare interface Indomitable {
     once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
     off(event: 'debug', listener: (message: string) => void): this;
-    off(event: 'connect', listener: (connection: Connection, payload?: unknown) => void): this;
-    off(event: 'disconnect', listener: (connection: Connection, reason?: unknown) => void): this;
-    off(event: 'close', listener: () => void): this;
-    off(event: 'message', listener: (message: Message) => void): this;
+    off(event: 'message', listener: (message: Message|unknown) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;
     off(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
     off(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
@@ -142,7 +112,6 @@ export class Indomitable extends EventEmitter {
     public shardCount: number|'auto';
     public cachedSession?: SessionObject;
     public readonly clientOptions: DiscordJsClientOptions;
-    public readonly ipcOptions: IpcOptions;
     public readonly nodeArgs: string[];
     public readonly ipcTimeout: number;
     public readonly spawnTimeout: number;
@@ -173,7 +142,6 @@ export class Indomitable extends EventEmitter {
         this.clusterCount = options.clusterCount || 'auto';
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
-        this.ipcOptions = options.ipcOptions || {};
         this.nodeArgs = options.nodeArgs || [];
         this.ipcTimeout = options.ipcTimeout ?? 60000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
@@ -216,7 +184,6 @@ export class Indomitable extends EventEmitter {
             await shardClient.start(this.token);
             return;
         }
-        await this.ipc!.server.start();
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
         if (typeof this.shardCount !== 'number') {
@@ -234,7 +201,6 @@ export class Indomitable extends EventEmitter {
             const cluster = new ClusterManager({ id, shards: chunk, manager: this });
             this.clusters!.set(id, cluster);
         }
-        this.ipc!.server.setMaxListeners(this.clusters!.size * 2);
         await this.addToSpawnQueue(...this.clusters!.values());
     }
 
