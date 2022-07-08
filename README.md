@@ -17,6 +17,8 @@
 
 * Reliable
 
+* ESM & CommonJS supported
+
 * Promisified IPC (Bi-directional)
 
 * No dependencies (v2 onwards)
