@@ -37,6 +37,8 @@
 
 🔗 https://deivu.github.io/Indomitable/index.html
 
+> Don't forget to read my "Notes" below!
+
 ## Example Usage
 
 > Basic usage
@@ -94,12 +96,12 @@ client.shard
 ```js
 // Primary Process
 indomitable.on('message', message => {
-    if (message.content.op === 'something you do') {
+    if (message.content.op === 'something') {
         doSomething();
     }
 });
 // Worker Process (your client most likely)
-client.shard.send({ content: { op: 'something you do' } })
+client.shard.send({ content: { op: 'something' } })
     .catch(console.error);
 ```
 
