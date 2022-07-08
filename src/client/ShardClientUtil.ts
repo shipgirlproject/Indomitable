@@ -6,33 +6,12 @@ import EventEmitter from 'node:events';
 
 export declare interface ShardClientUtil {
     /**
-     * Emmited when an ipc client connection from parent process closes
-     * @eventProperty
-     */
-    on(event: 'close', listener: (reason: any) => void): this;
-    /**
-     * Emmited when an ipc client status change
-     * @eventProperty
-     */
-    on(event: 'status', listener: (status: number) => void): this;
-    /**
      * Emmited when an IPC message from parent process is recieved
      * @eventProperty
      */
-    on(event: 'message', listener: (message: Message) => void): this;
-    /**
-     * Emitted when an error occurs
-     * @eventProperty
-     */
-    on(event: 'error', listener: (error: unknown) => void): this;
-    once(event: 'close', listener: (reason: any) => void): this;
-    once(event: 'status', listener: (status: number) => void): this;
-    once(event: 'message', listener: (message: Message) => void): this;
-    once(event: 'error', listener: (error: unknown) => void): this;
-    off(event: 'close', listener: (reason: any) => void): this;
-    off(event: 'status', listener: (status: number) => void): this;
-    off(event: 'message', listener: (message: Message) => void): this;
-    off(event: 'error', listener: (error: unknown) => void): this;
+    on(event: 'message', listener: (message: Message|unknown) => void): this;
+    once(event: 'message', listener: (message: Message|unknown) => void): this;
+    off(event: 'message', listener: (message: Message|unknown) => void): this;
 }
 
 /**

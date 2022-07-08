@@ -1,74 +1,109 @@
-import { Client } from 'net-ipc';
+import { ChildProcess, Serializable } from 'node:child_process';
+import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable';
-import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError } from '../Util';
+import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError, RawIpcMessage, RawIpcMessageType, InternalPromise } from '../Util';
 import { ShardClientUtil } from '../client/ShardClientUtil';
 
 export class Worker {
     public readonly shard: ShardClientUtil;
     public readonly manager: Indomitable;
-    public readonly connection: Client;
+    private readonly promises: Map<string, InternalPromise>;
     constructor(shard: ShardClientUtil, manager: Indomitable) {
         this.shard = shard;
         this.manager = manager;
-        this.connection = new Client({ ...{ path: 'indomitable', compress: false, messagepack: true, reconnect: true }, ...(this.manager.ipcOptions.worker || {}) })
-            .on('close', (...args) => this.shard.emit(LibraryEvents.CLOSE, ...args))
-            .on('status', (...args) => this.shard.emit(LibraryEvents.STATUS, ...args))
-            .on('message', message => this.message(message))
-            .on('request', (message, response) => this.message(message, response))
-            .on('error', (...args) => {
-                if (this.shard.listeners(LibraryEvents.ERROR).length === 0) return;
-                this.shard.emit(LibraryEvents.ERROR, ...args);
-            });
+        this.promises = new Map();
+        (process as unknown as ChildProcess).on('message', data => this.handle(data));
     }
 
-    public async send(transportable: Transportable): Promise<any|void> {
-        const repliable = transportable.repliable ?? false;
-        if (repliable) {
-            const result: any = await this.connection.request(transportable, this.manager.ipcTimeout);
-            if (result?.internal && result.error) {
-                const error = new Error(result.reason || 'Unspecified reason');
-                error.stack = result.stack;
-                error.name = result.name;
-                throw error;
-            }
-            return result;
-        }
-        return await this.connection.send(transportable);
+    public get pending(): number {
+        return this.promises.size;
     }
 
-    private async message(data: Transportable, response?: (data: any) => Promise<void>): Promise<void> {
-        try {
-            const reply = response || (async () => undefined);
-            const message: Message = {
-                reply,
-                content: data.content,
-                repliable: !!response,
+    public send(transportable: Transportable): Promise<any|undefined> {
+        return new Promise((resolve, reject) => {
+            const repliable = transportable.repliable || false;
+            const id = repliable ? randomUUID() : null;
+            const data: RawIpcMessage = {
+                id,
+                content: transportable.content,
+                internal: true,
+                type: RawIpcMessageType.MESSAGE
             };
-            // internal events should not be emitted to end user
-            if (message.content.internal) {
-                // internal error handling
-                try {
-                    const content = message.content as InternalEvents;
-                    if (content.op === ClientEvents.EVAL)
-                        // @ts-ignore -- needs to be accessed for broadcastEval
-                        await message.reply(this.shard.client._eval(message.content.data));
-                } catch (error: any) {
-                    if (!message.repliable) throw error as Error;
-                    const internalError: InternalError = {
-                        internal: true,
-                        error: true,
-                        name: error.name,
-                        reason: error.reason,
-                        stack: error.stack
-                    };
-                    await message.reply(internalError);
-                }
-                return;
+            try {
+                (process as unknown as ChildProcess).send(data);
+            } catch (error) {
+                return reject(error);
             }
-            this.shard.emit(LibraryEvents.MESSAGE, message);
+            if (!id) return resolve(undefined);
+            const timeout = setTimeout(() => {
+                this.promises.delete(id);
+                reject(new Error('This promise timed out'));
+            }, this.manager.ipcTimeout).unref();
+            this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
+        });
+    }
+
+    private async handle(data: Serializable): Promise<boolean|void> {
+        try {
+            if (!(data as any).internal)
+                return this.manager.emit(LibraryEvents.MESSAGE, data);
+            if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
+                return await this.message(data as RawIpcMessage);
+            if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
+                return await this.promise(data as RawIpcMessage);
         } catch (error: unknown) {
             // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
             this.shard.client.emit(LibraryEvents.ERROR, error as Error);
+        }
+    }
+
+    private async promise(data: RawIpcMessage): Promise<boolean|void> {
+        const id = data.id as string;
+        const promise = this.promises.get(id);
+        if (!promise) return;
+        this.promises.delete(id);
+        clearTimeout(promise.timeout);
+        if (data.content?.internal && data.content?.error) {
+            const error = new Error(data.content.reason || 'Unspecified reason');
+            error.stack = data.content.stack;
+            error.name = data.content.name;
+            return promise.reject(error);
+        }
+        promise.resolve(data.content);
+    }
+
+    private async message(data: RawIpcMessage): Promise<boolean|void> {
+        const reply = (content: any) => {
+            if (!data.id) return;
+            const response: RawIpcMessage = {
+                id: data.id,
+                content,
+                internal: true,
+                type: RawIpcMessageType.RESPONSE
+            };
+            (process as unknown as ChildProcess).send(response);
+        };
+        const message: Message = {
+            repliable: !!data.id,
+            content: data.content,
+            reply
+        };
+        if (!message.content.internal)
+            return this.shard.emit(LibraryEvents.MESSAGE, message);
+        try {
+            const content = message.content as InternalEvents;
+            if (content.op === ClientEvents.EVAL)
+            // @ts-ignore -- needs to be accessed for broadcastEval
+                message.reply(this.shard.client._eval(content.data));
+        } catch (error: any) {
+            if (!message.repliable) throw error as Error;
+            message.reply({
+                internal: true,
+                error: true,
+                name: error.name,
+                reason: error.reason,
+                stack: error.stack
+            } as InternalError);
         }
     }
 }

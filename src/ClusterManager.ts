@@ -1,5 +1,6 @@
 import Cluster, { Worker } from 'node:cluster';
 import { Indomitable } from './Indomitable';
+import { Main } from './ipc/Main';
 import { Delay, LibraryEvents } from './Util';
 
 /**
@@ -18,6 +19,7 @@ export class ClusterManager {
     public readonly manager: Indomitable;
     public readonly id: number;
     public readonly shards: number[];
+    public readonly ipc: Main;
     public started: boolean;
     public ipcId?: string;
     public worker?: Worker;
@@ -32,18 +34,10 @@ export class ClusterManager {
         this.manager = options.manager;
         this.id = options.id;
         this.shards = options.shards;
+        this.ipc = new Main(this);
         this.started = false;
-        this.ipcId = undefined;
         this.worker = undefined;
         this.tickReady = undefined;
-    }
-
-    /**
-     * Shortcut to get the ipc connection for this cluster manager
-     * @returns The connection
-     */
-    get ipc() {
-        return this.manager.ipc!.server.connections.find(connection => this.ipcId === connection.id);
     }
 
     /**
@@ -78,11 +72,13 @@ export class ClusterManager {
             CLUSTER_TOTAL: this.manager.clusterCount.toString(),
             ...process.env
         });
-        this.worker.once('exit', (code, signal) => {
-            this.cleanup(code, signal);
-            if (!this.manager.autoRestart) return;
-            this.manager.addToSpawnQueue(this);
-        });
+        this.worker
+            .on('message', message => this.ipc.handle(message))
+            .once('exit', (code, signal) => {
+                this.cleanup(code, signal);
+                if (!this.manager.autoRestart) return;
+                this.manager.addToSpawnQueue(this);
+            });
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         await this.wait();
         this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)!`);
@@ -95,9 +91,10 @@ export class ClusterManager {
      * Remove all listeners on attached worker process and free from memory
      */
     private cleanup(code: number|null, signal: string|null) {
-        this.ipc?.close('Restarting', false);
+        this.ipc.flush();
         this.worker?.removeAllListeners();
         this.worker = undefined;
+        if (!this.worker) return;
         this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
     }
