@@ -129,12 +129,14 @@ indomitable.ipc.send(0, { content: { op: 'nya' } })
     .catch(console.error);
 // send to specific cluster with repliable
 indomitable.ipc.send(0, { content: { op: 'something' }, repliable: true })
+    .then(console.log);
     .catch(console.error);
 // broadcast to all clusters
 indomitable.ipc.broadcast({ content: { op: 'meow' } })
     .catch(console.error);
 // broadcast to all clusters with repliable is possible as well
 indomitable.ipc.broadcast({ content: { op: 'meow' }, repliable: true })
+    .then(console.log);
     .catch(console.error);
 
 // Worker Process (your client most likely)
