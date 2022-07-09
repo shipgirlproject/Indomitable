@@ -240,24 +240,23 @@ export class Indomitable extends EventEmitter {
     private async processQueue(): Promise<void> {
         if (this.busy || !this.spawnQueue!.length) return;
         this.busy = true;
-        let cluster: ClusterManager;
         this.emit(LibraryEvents.DEBUG, `Processing spawn queue with ${this.spawnQueue!.length} clusters waiting to be spawned....`);
-        try {
-            while(this.spawnQueue!.length) {
+        let cluster: ClusterManager;
+        while(this.spawnQueue!.length > 0) {
+            try {
                 cluster = this.spawnQueue!.shift()!;
-                if (cluster!.started)
-                    await cluster!.respawn();
+                if (cluster.started)
+                    await cluster.respawn();
                 else
-                    await cluster!.spawn();
+                    await cluster.spawn();
+            } catch (error: unknown) {
+                this.emit(LibraryEvents.ERROR, error as Error);
+                if (cluster! && this.autoRestart) {
+                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Requeuing...`);
+                    if (!this.spawnQueue!.includes(cluster)) this.spawnQueue!.push(cluster);
+                }
             }
-        } catch (error: unknown) {
-            this.emit(LibraryEvents.ERROR, error as Error);
-            if (cluster! && this.autoRestart) {
-                this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Requeuing...`);
-                if (!this.spawnQueue!.includes(cluster)) this.spawnQueue!.push(cluster);
-            }
-        } finally {
-            this.busy = false;
         }
+        this.busy = false;
     }
 }
