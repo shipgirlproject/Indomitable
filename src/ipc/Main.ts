@@ -91,7 +91,7 @@ export class Main {
             reply
         };
         if (!message.content.internal)
-            return this.manager.emit(LibraryEvents.MESSAGE, data);
+            return this.manager.emit(LibraryEvents.MESSAGE, message);
         // internal error handling
         try {
             const content = message.content as InternalEvents;
