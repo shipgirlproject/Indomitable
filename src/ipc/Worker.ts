@@ -19,6 +19,17 @@ export class Worker {
         return this.promises.size;
     }
 
+    public async ping(): Promise<number> {
+        const content: InternalEvents = {
+            op: ClientEvents.PING,
+            data: {},
+            internal: true
+        };
+        const start = process.hrtime.bigint();
+        const end = await this.send({ content, repliable: true });
+        return Number(end - start);
+    }
+
     public send(transportable: Transportable): Promise<any|undefined> {
         return new Promise((resolve, reject) => {
             const repliable = transportable.repliable || false;
