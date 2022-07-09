@@ -182,7 +182,6 @@ spawnTimeout | number | Timeout before we fail a cluster spawn | No | 60000 (mul
 spawnDelay | number | Time to wait before spawning a new cluster | No | 5000
 autoRestart | boolean | If you want to auto restart the shards that have been killed unintentionally | No | false
 client | Client | Your Discord.JS non modified OR modified client | Yes | None |
-token | strubg | The token of your bot | Yes | None |
+token | string | The token of your bot | Yes | None |
 
-### Made with ❤ by
-> @Sāya#0113 (https://github.com/Deivu/)
+### Made with ❤ by @Sāya#0113 (https://github.com/Deivu/)
