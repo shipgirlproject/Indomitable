@@ -1,7 +1,7 @@
 {
   "name": "indomitable",
   "version": "1.0.1",
-  "description": "A lightweight (the actual ship is heavy though), performat, powerful & no depedency sharder for Discord.JS",
+  "description": "A lightweight (the actual ship is heavy though), performant, powerful & no depedency sharder for Discord.JS",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",

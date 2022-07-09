@@ -23,6 +23,7 @@ export class Main {
     public flush(reason: string): void {
         const error = new Error(reason);
         for (const promise of this.promises.values()) promise.reject(error);
+        this.promises.clear();
     }
 
     public send(transportable: Transportable): Promise<any|undefined> {
