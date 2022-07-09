@@ -27,7 +27,7 @@ export class Worker {
         };
         const start = process.hrtime.bigint();
         const end = await this.send({ content, repliable: true });
-        return Number(end - start);
+        return Number(BigInt(end) - start);
     }
 
     public send(transportable: Transportable): Promise<any|undefined> {
