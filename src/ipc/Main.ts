@@ -22,7 +22,10 @@ export class Main {
 
     public flush(reason: string): void {
         const error = new Error(reason);
-        for (const promise of this.promises.values()) promise.reject(error);
+        for (const promise of this.promises.values()) {
+            clearTimeout(promise.timeout);
+            promise.reject(error);
+        }
         this.promises.clear();
     }
 
