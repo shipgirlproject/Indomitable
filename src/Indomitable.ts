@@ -242,7 +242,7 @@ export class Indomitable extends EventEmitter {
         this.busy = true;
         this.emit(LibraryEvents.DEBUG, `Processing spawn queue with ${this.spawnQueue!.length} clusters waiting to be spawned....`);
         let cluster: ClusterManager;
-        while(this.spawnQueue!.length > 0) {
+        while (this.spawnQueue!.length > 0) {
             try {
                 cluster = this.spawnQueue!.shift()!;
                 if (cluster.started)
@@ -258,5 +258,6 @@ export class Indomitable extends EventEmitter {
             }
         }
         this.busy = false;
+        this.emit(LibraryEvents.DEBUG, 'Cluster Queue Empty! Clusters done booting up');
     }
 }
