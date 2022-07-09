@@ -105,7 +105,7 @@ export class Main {
                 break;
             }
             case ClientEvents.PING: {
-                const end = process.hrtime.bigint();
+                const end = process.hrtime.bigint().toString();
                 message.reply(end);
                 break;
             }
