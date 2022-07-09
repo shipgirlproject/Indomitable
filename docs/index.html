@@ -15,7 +15,7 @@
   <h2>Indomitable</h2>
 </a>
 <blockquote>
-<p>A lightweight (the actual ship is heavy though), performat &amp; powerful sharder for Discord.JS. Indomitable uses cluster module to evenly spread her weight (load) across your cores</p>
+<p>A lightweight (the actual ship is heavy though), performant, powerful &amp; no dependency sharder for Discord.JS</p>
 </blockquote>
 <p align="center">
     <img src="https://cdn.donmai.us/original/9b/cf/__indomitable_azur_lane_drawn_by_kincora__9bcf19b2f822ce75ea707e5047882d6a.png"> 
@@ -26,6 +26,26 @@
 </blockquote>
 <ul>
 <li>Supports Discord.JS <code>v13</code> and <code>discord.js@dev</code></li>
+</ul>
+
+<a href="#features" id="features" style="color: inherit; text-decoration: none;">
+  <h2>Features</h2>
+</a>
+<ul>
+<li><p>Fast</p>
+</li>
+<li><p>Lightweight</p>
+</li>
+<li><p>Reliable</p>
+</li>
+<li><p>ESM &amp; CommonJS supported</p>
+</li>
+<li><p>Promisified IPC (Bi-directional)</p>
+</li>
+<li><p>No dependencies (v2 onwards)</p>
+</li>
+<li><p>Very cute (and lazy like the Kaiju Princess! <em>If you know, you know</em>)</p>
+</li>
 </ul>
 
 <a href="#installation" id="installation" style="color: inherit; text-decoration: none;">
@@ -48,6 +68,9 @@
   <h2>Documentation</h2>
 </a>
 <p>🔗 <a href="https://deivu.github.io/Indomitable/index.html">https://deivu.github.io/Indomitable/index.html</a></p>
+<blockquote>
+<p>Don&#39;t forget to read my &quot;Notes&quot; below!</p>
+</blockquote>
 
 <a href="#example-usage" id="example-usage" style="color: inherit; text-decoration: none;">
   <h2>Example Usage</h2>
@@ -67,6 +90,21 @@
 </blockquote>
 <pre><code class="language-js"><span class="hl-6">// Saya&#39;s note:</span><br/><span class="hl-6">// Not recommended as every broadcastEval uses eval() internally</span><br/><span class="hl-6">// Consider learning the ipc system of this library in future to get data across your clusters</span><br/><span class="hl-5">client</span><span class="hl-1">.</span><span class="hl-5">shard</span><br/><span class="hl-1">    .</span><span class="hl-3">broadcastEval</span><span class="hl-1">(</span><span class="hl-5">client</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> </span><span class="hl-5">client</span><span class="hl-1">.</span><span class="hl-5">guilds</span><span class="hl-1">.</span><span class="hl-5">cache</span><span class="hl-1">.</span><span class="hl-5">size</span><span class="hl-1">)</span><br/><span class="hl-1">    .</span><span class="hl-3">then</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">);</span>
 </code></pre>
+<blockquote>
+<p>Example of a very basic ipc comunication (non repliable)</p>
+</blockquote>
+<pre><code class="language-js"><span class="hl-6">// Primary Process</span><br/><span class="hl-5">indomitable</span><span class="hl-1">.</span><span class="hl-3">on</span><span class="hl-1">(</span><span class="hl-4">&#39;message&#39;</span><span class="hl-1">, </span><span class="hl-5">message</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-8">if</span><span class="hl-1"> (</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">content</span><span class="hl-1">.</span><span class="hl-5">op</span><span class="hl-1"> === </span><span class="hl-4">&#39;something&#39;</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-3">doSomething</span><span class="hl-1">();</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">});</span><br/><span class="hl-6">// Worker Process (your client most likely)</span><br/><span class="hl-5">client</span><span class="hl-1">.</span><span class="hl-5">shard</span><span class="hl-1">.</span><span class="hl-3">send</span><span class="hl-1">({ </span><span class="hl-5">content:</span><span class="hl-1"> { </span><span class="hl-5">op:</span><span class="hl-1"> </span><span class="hl-4">&#39;something&#39;</span><span class="hl-1"> } })</span><br/><span class="hl-1">    .</span><span class="hl-3">catch</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">);</span>
+</code></pre>
+<blockquote>
+<p>Example of a very basic ipc comunication (repliable)</p>
+</blockquote>
+<pre><code class="language-js"><span class="hl-6">// Primary Process</span><br/><span class="hl-5">indomitable</span><span class="hl-1">.</span><span class="hl-3">on</span><span class="hl-1">(</span><span class="hl-4">&#39;message&#39;</span><span class="hl-1">, </span><span class="hl-5">message</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-8">if</span><span class="hl-1"> (</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">content</span><span class="hl-1">.</span><span class="hl-5">op</span><span class="hl-1"> === </span><span class="hl-4">&#39;something&#39;</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-8">if</span><span class="hl-1"> (!</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">repliable</span><span class="hl-1">) </span><span class="hl-8">return</span><span class="hl-1">; </span><span class="hl-6">// check if the message is repliable just incase, though it won&#39;t error even it is not</span><br/><span class="hl-1">        </span><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">someValue</span><span class="hl-1"> = </span><span class="hl-3">doSomething</span><span class="hl-1">();</span><br/><span class="hl-1">        </span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-3">reply</span><span class="hl-1">(</span><span class="hl-5">someValue</span><span class="hl-1">);</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">});</span><br/><span class="hl-6">// Worker Process (your client most likely)</span><br/><span class="hl-5">client</span><span class="hl-1">.</span><span class="hl-5">shard</span><span class="hl-1">.</span><span class="hl-3">send</span><span class="hl-1">({ </span><span class="hl-5">content:</span><span class="hl-1"> { </span><span class="hl-5">op:</span><span class="hl-1"> </span><span class="hl-4">&#39;something&#39;</span><span class="hl-1"> }, </span><span class="hl-5">repliable:</span><span class="hl-1"> </span><span class="hl-0">true</span><span class="hl-1"> })</span><br/><span class="hl-1">    .</span><span class="hl-3">then</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">)</span><br/><span class="hl-1">    .</span><span class="hl-3">catch</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">);</span>
+</code></pre>
+<blockquote>
+<p>You could also do it reversely (main process asking data from clusters instead of clusters asking to main process)</p>
+</blockquote>
+<pre><code class="language-js"><span class="hl-6">// Primary Process</span><br/><span class="hl-6">// send to specific cluster </span><br/><span class="hl-5">indomitable</span><span class="hl-1">.</span><span class="hl-5">ipc</span><span class="hl-1">.</span><span class="hl-3">send</span><span class="hl-1">(</span><span class="hl-7">0</span><span class="hl-1">, { </span><span class="hl-5">content:</span><span class="hl-1"> { </span><span class="hl-5">op:</span><span class="hl-1"> </span><span class="hl-4">&#39;nya&#39;</span><span class="hl-1"> } })</span><br/><span class="hl-1">    .</span><span class="hl-3">catch</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">);</span><br/><span class="hl-6">// send to specific cluster with repliable</span><br/><span class="hl-5">indomitable</span><span class="hl-1">.</span><span class="hl-5">ipc</span><span class="hl-1">.</span><span class="hl-3">send</span><span class="hl-1">(</span><span class="hl-7">0</span><span class="hl-1">, { </span><span class="hl-5">content:</span><span class="hl-1"> { </span><span class="hl-5">op:</span><span class="hl-1"> </span><span class="hl-4">&#39;something&#39;</span><span class="hl-1"> }, </span><span class="hl-5">repliable:</span><span class="hl-1"> </span><span class="hl-0">true</span><span class="hl-1"> })</span><br/><span class="hl-1">    .</span><span class="hl-3">then</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">);</span><br/><span class="hl-1">    .</span><span class="hl-3">catch</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">);</span><br/><span class="hl-6">// broadcast to all clusters</span><br/><span class="hl-5">indomitable</span><span class="hl-1">.</span><span class="hl-5">ipc</span><span class="hl-1">.</span><span class="hl-3">broadcast</span><span class="hl-1">({ </span><span class="hl-5">content:</span><span class="hl-1"> { </span><span class="hl-5">op:</span><span class="hl-1"> </span><span class="hl-4">&#39;meow&#39;</span><span class="hl-1"> } })</span><br/><span class="hl-1">    .</span><span class="hl-3">catch</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">);</span><br/><span class="hl-6">// broadcast to all clusters with repliable is possible as well</span><br/><span class="hl-5">indomitable</span><span class="hl-1">.</span><span class="hl-5">ipc</span><span class="hl-1">.</span><span class="hl-3">broadcast</span><span class="hl-1">({ </span><span class="hl-5">content:</span><span class="hl-1"> { </span><span class="hl-5">op:</span><span class="hl-1"> </span><span class="hl-4">&#39;meow&#39;</span><span class="hl-1"> }, </span><span class="hl-5">repliable:</span><span class="hl-1"> </span><span class="hl-0">true</span><span class="hl-1"> })</span><br/><span class="hl-1">    .</span><span class="hl-3">then</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">log</span><span class="hl-1">);</span><br/><span class="hl-1">    .</span><span class="hl-3">catch</span><span class="hl-1">(</span><span class="hl-5">console</span><span class="hl-1">.</span><span class="hl-5">error</span><span class="hl-1">);</span><br/><br/><span class="hl-6">// Worker Process (your client most likely)</span><br/><span class="hl-5">client</span><span class="hl-1">.</span><span class="hl-5">shard</span><span class="hl-1">.</span><span class="hl-3">on</span><span class="hl-1">(</span><span class="hl-4">&#39;message&#39;</span><span class="hl-1">, </span><span class="hl-5">message</span><span class="hl-1"> </span><span class="hl-0">=&gt;</span><span class="hl-1"> {</span><br/><span class="hl-1">    </span><span class="hl-8">if</span><span class="hl-1"> (</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">content</span><span class="hl-1">.</span><span class="hl-5">op</span><span class="hl-1"> === </span><span class="hl-4">&#39;something&#39;</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-8">if</span><span class="hl-1"> (!</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">repliable</span><span class="hl-1">) </span><span class="hl-8">return</span><span class="hl-1">;</span><br/><span class="hl-1">        </span><span class="hl-0">const</span><span class="hl-1"> </span><span class="hl-2">someValue</span><span class="hl-1"> = </span><span class="hl-3">doSomething</span><span class="hl-1">();</span><br/><span class="hl-1">        </span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-3">reply</span><span class="hl-1">(</span><span class="hl-5">someValue</span><span class="hl-1">);</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">    </span><span class="hl-8">if</span><span class="hl-1"> (</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">content</span><span class="hl-1">.</span><span class="hl-5">op</span><span class="hl-1"> === </span><span class="hl-4">&#39;nya&#39;</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-3">doSomething</span><span class="hl-1">();</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">    </span><span class="hl-8">if</span><span class="hl-1"> (</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">content</span><span class="hl-1">.</span><span class="hl-5">op</span><span class="hl-1"> === </span><span class="hl-4">&#39;meow&#39;</span><span class="hl-1">) {</span><br/><span class="hl-1">        </span><span class="hl-8">if</span><span class="hl-1"> (!</span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-5">repliable</span><span class="hl-1">) </span><span class="hl-8">return</span><span class="hl-1">;</span><br/><span class="hl-1">        </span><span class="hl-5">message</span><span class="hl-1">.</span><span class="hl-3">reply</span><span class="hl-1">(</span><span class="hl-4">&#39;nya&#39;</span><span class="hl-1">);</span><br/><span class="hl-1">    }</span><br/><span class="hl-1">})</span>
+</code></pre>
 
 <a href="#notes" id="notes" style="color: inherit; text-decoration: none;">
   <h3>Notes</h3>
@@ -76,11 +114,14 @@
 </li>
 <li><p>Extended clients that extend from discord.js client will work, as long as you use <code>client.login(&#39;token&#39;);</code> to get your bot running</p>
 </li>
-<li><p>For fastest performance possible, install the optional dependency <strong>MessagePack</strong> <code>npm i --save msgpackr</code></p>
-</li>
 <li><p>Your Discord.JS Client ShardClientUtil is replaced with Indomitable&#39;s ShardClientUtil. Refer to our docs for documentation 🔗 <a href="https://deivu.github.io/Indomitable/classes/client_ShardClientUtil.ShardClientUtil.html">https://deivu.github.io/Indomitable/classes/client_ShardClientUtil.ShardClientUtil.html</a></p>
 </li>
 </ul>
+
+<a href="#other-links" id="other-links" style="color: inherit; text-decoration: none;">
+  <h3>Other Links</h3>
+</a>
+<p><a href="https://discord.gg/FVqbtGu">Support</a> (#Development)</p>
 
 <a href="#indomitable-options" id="indomitable-options" style="color: inherit; text-decoration: none;">
   <h3>Indomitable Options</h3>
@@ -117,25 +158,18 @@
 <td>{}</td>
 </tr>
 <tr>
-<td>ipcOptions</td>
-<td>Object{primary?: {}, worker?: {}}</td>
-<td>Options for net-ipc</td>
+<td>clusterSettings</td>
+<td>Object</td>
+<td>Options for the forked process</td>
 <td>No</td>
 <td>{}</td>
-</tr>
-<tr>
-<td>nodeArgs</td>
-<td>string[]</td>
-<td>Node arguments to pass to a cluster</td>
-<td>No</td>
-<td>[]</td>
 </tr>
 <tr>
 <td>ipcTimeout</td>
 <td>number</td>
 <td>Timeout before we fail a request</td>
 <td>No</td>
-<td>60000</td>
+<td>30000</td>
 </tr>
 <tr>
 <td>spawnTimeout</td>
@@ -206,7 +240,8 @@
 <li class="tsd-kind-module"><a href="modules/Util.html">Util</a></li>
 <li class="tsd-kind-module"><a href="modules/client_ShardClient.html">client/<wbr/>Shard<wbr/>Client</a></li>
 <li class="tsd-kind-module"><a href="modules/client_ShardClientUtil.html">client/<wbr/>Shard<wbr/>Client<wbr/>Util</a></li>
-<li class="tsd-kind-module"><a href="modules/ipc_Primary.html">ipc/<wbr/>Primary</a></li>
+<li class="tsd-kind-module"><a href="modules/ipc_Main.html">ipc/<wbr/>Main</a></li>
+<li class="tsd-kind-module"><a href="modules/ipc_MainUtil.html">ipc/<wbr/>Main<wbr/>Util</a></li>
 <li class="tsd-kind-module"><a href="modules/ipc_Worker.html">ipc/<wbr/>Worker</a></li></ul></li></ul></div></details></nav></div></div>
 <div class="container tsd-generator">
 <p>Generated using <a href="https://typedoc.org/" target="_blank">TypeDoc</a></p></div>
