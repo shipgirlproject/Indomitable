@@ -19,6 +19,12 @@ export class Worker {
         return this.promises.size;
     }
 
+    public flush(reason: string): void {
+        const error = new Error(reason);
+        for (const promise of this.promises.values()) promise.reject(error);
+        this.promises.clear();
+    }
+
     public async ping(): Promise<number> {
         const content: InternalEvents = {
             op: ClientEvents.PING,

@@ -1,6 +1,6 @@
 ## Indomitable
 
-> A lightweight (the actual ship is heavy though), performat, powerful & no depedency sharder for Discord.JS
+> A lightweight (the actual ship is heavy though), performant, powerful & no depedency sharder for Discord.JS
 <p align="center">
     <img src="https://cdn.donmai.us/original/9b/cf/__indomitable_azur_lane_drawn_by_kincora__9bcf19b2f822ce75ea707e5047882d6a.png"> 
 </p>
