@@ -13,7 +13,9 @@ export class MainUtil {
         return cluster.ipc.send(transportable);
     }
 
-    public broadcast(transportable: Transportable): Promise<any[]|undefined> {
-        return Promise.all([...this.manager.clusters!.values()].map(cluster => cluster.ipc.send(transportable)));
+    public async broadcast(transportable: Transportable): Promise<any[]|undefined> {
+        const results = await Promise.all([...this.manager.clusters!.values()].map(cluster => cluster.ipc.send(transportable)));
+        if (!transportable.repliable) return;
+        return results.filter(result => result !== undefined);
     }
 }
