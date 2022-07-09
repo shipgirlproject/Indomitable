@@ -176,8 +176,8 @@ client.shard.on('message', message => {
 clusterCount | number or 'auto' | How many clusters we should spawn | No  | 'auto'
 shardCount | number or 'auto' | How many websocket shards we should make | No | 'auto'
 clientOptions | Object | Discord.JS Client Options | No | {}
-nodeArgs | string[] | Node arguments to pass to a cluster | No | []
-ipcTimeout | number | Timeout before we fail a request | No | 60000
+clusterSettings | Object | Options for the forked process | No | {}
+ipcTimeout | number | Timeout before we fail a request | No | 30000
 spawnTimeout | number | Timeout before we fail a cluster spawn | No | 60000 (multiplied by clusterShardCount internally)
 spawnDelay | number | Time to wait before spawning a new cluster | No | 5000
 autoRestart | boolean | If you want to auto restart the shards that have been killed unintentionally | No | false

@@ -140,7 +140,7 @@ export class Indomitable extends EventEmitter {
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
         this.clusterSettings = options.clusterSettings || {};
-        this.ipcTimeout = options.ipcTimeout ?? 60000;
+        this.ipcTimeout = options.ipcTimeout ?? 30000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.autoRestart = options.autoRestart ?? false;
