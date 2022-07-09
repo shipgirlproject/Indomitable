@@ -3,10 +3,9 @@ import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './U
 import { ShardClient } from './client/ShardClient';
 import { MainUtil as PrimaryIpc } from './ipc/MainUtil';
 import { ClusterManager } from './ClusterManager';
+import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
-import Cluster from 'node:cluster';
 import Os from 'node:os';
-
 
 /**
  * Options to control Indomitable behavior
@@ -15,7 +14,7 @@ export interface IndomitableOptions {
     clusterCount?: number|'auto';
     shardCount?: number|'auto';
     clientOptions?: DiscordJsClientOptions;
-    nodeArgs?: string[];
+    clusterSettings?: ClusterSettings;
     ipcTimeout?: number;
     spawnTimeout?: number;
     spawnDelay?: number;
@@ -112,7 +111,7 @@ export class Indomitable extends EventEmitter {
     public shardCount: number|'auto';
     public cachedSession?: SessionObject;
     public readonly clientOptions: DiscordJsClientOptions;
-    public readonly nodeArgs: string[];
+    public readonly clusterSettings: ClusterSettings;
     public readonly ipcTimeout: number;
     public readonly spawnTimeout: number;
     public readonly spawnDelay: number;
@@ -127,7 +126,7 @@ export class Indomitable extends EventEmitter {
      * @param [options.clusterCount=auto] The amount of clusters to spawn. Expects a number or 'auto'
      * @param [options.shardCount=auto] The number of shards to create. Expects a number or 'auto'
      * @param [options.clientOptions] Options for the Discord.js client
-     * @param [options.nodeArgs] An array of arguments for each child process
+     * @param [options.clusterSettings] Options for the forked process
      * @param [options.ipcTimeout] Time to wait before reporting a failed IPC connection
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
      * @param [options.spawnDelay] Time to wait before spawing another child process
@@ -140,7 +139,7 @@ export class Indomitable extends EventEmitter {
         this.clusterCount = options.clusterCount || 'auto';
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
-        this.nodeArgs = options.nodeArgs || [];
+        this.clusterSettings = options.clusterSettings || {};
         this.ipcTimeout = options.ipcTimeout ?? 60000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
@@ -193,7 +192,7 @@ export class Indomitable extends EventEmitter {
         this.emit(LibraryEvents.DEBUG, `Starting ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
         const shards = [...Array(this.shardCount).keys()];
         const chunks = Chunk(shards, Math.round(this.shardCount / this.clusterCount));
-        if (this.nodeArgs.length) Cluster.setupPrimary({ execArgv: this.nodeArgs });
+        Cluster.setupPrimary({ ...{ serialization: 'json' }, ...this.clusterSettings  });
         for (let id = 0; id < this.clusterCount; id++) {
             const chunk = chunks.shift()!;
             const cluster = new ClusterManager({ id, shards: chunk, manager: this });
