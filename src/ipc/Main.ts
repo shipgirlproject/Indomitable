@@ -27,7 +27,10 @@ export class Main {
 
     public send(transportable: Transportable): Promise<any|undefined> {
         return new Promise((resolve, reject) => {
-            if (!this.cluster.worker) return reject(new Error('Cluster not yet ready'));
+            if (!this.cluster.worker) {
+                this.manager.emit(LibraryEvents.DEBUG, `Tried to send message to ${this.cluster.id} but this worker is yet to be available`);
+                return resolve(undefined);
+            }
             const repliable = transportable.repliable || false;
             const id = repliable ? randomUUID() : null;
             const data: RawIpcMessage = {
