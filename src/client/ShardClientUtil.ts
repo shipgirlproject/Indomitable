@@ -37,6 +37,14 @@ export class ShardClientUtil extends EventEmitter {
     }
 
     /**
+     * A shortcut to get the current ipc delay
+     * @returns A promise that resolves to delay in nanoseconds
+     */
+    public ping(): Promise<number> {
+        return this.ipc.ping();
+    }
+
+    /**
      * Evaluates a script or function on all clusters in the context of the your client
      * @returns A promise that resolves to an array of code results
      */

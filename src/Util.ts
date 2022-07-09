@@ -9,6 +9,7 @@ export enum ClientEvents {
     RESTART_ALL = 'restartAll',
     SESSION_INFO = 'sessionInfo',
     READY = 'ready',
+    PING = 'ping',
     SHARD_READY = 'shardReady',
     SHARD_RECONNECT = 'shardReconnect',
     SHARD_RESUME = 'shardResume',

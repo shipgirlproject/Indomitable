@@ -104,6 +104,11 @@ export class Main {
                 if (cluster?.tickReady) cluster.tickReady();
                 break;
             }
+            case ClientEvents.PING: {
+                const end = process.hrtime.bigint();
+                message.reply(end);
+                break;
+            }
             case ClientEvents.EVAL: {
                 // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
                 const data = await this.manager.ipc!.broadcast({
