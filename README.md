@@ -7,7 +7,7 @@
 
 > The ShipGirl Project; ⓒ Azur Lane
 
-* Supports Discord.JS `v13` and `discord.js@dev`
+* Supports Discord.JS `v13` and `v14`
 
 ## Features
 
