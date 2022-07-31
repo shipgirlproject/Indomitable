@@ -78,7 +78,7 @@ const options = {
     token
 }
 
-const manager = new Indomitable(client)
+const manager = new Indomitable(options)
     .on('error', console.error);
 
 manager.spawn();
