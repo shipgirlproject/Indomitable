@@ -19,6 +19,7 @@ export interface IndomitableOptions {
     spawnTimeout?: number;
     spawnDelay?: number;
     autoRestart?: boolean;
+    waitForReady?: boolean;
     client: typeof Client;
     token: string;
 }
@@ -116,6 +117,7 @@ export class Indomitable extends EventEmitter {
     public readonly spawnTimeout: number;
     public readonly spawnDelay: number;
     public readonly autoRestart: boolean;
+    public readonly waitForReady: boolean;
     public readonly client: typeof Client;
     public readonly clusters?: Map<number, ClusterManager>;
     public readonly ipc?: PrimaryIpc;
@@ -131,6 +133,7 @@ export class Indomitable extends EventEmitter {
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
      * @param [options.spawnDelay] Time to wait before spawing another child process
      * @param [options.autoRestart] Whether to automatically restart shards that have been killed unintentionally
+     * @param [options.waitForReady] Whether to wait for clusters to be ready before spawning a new one
      * @param [options.client] A Discord.js client class or a modified Discord.js client class
      * @param options.token Discord bot token
      */
@@ -144,6 +147,7 @@ export class Indomitable extends EventEmitter {
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.autoRestart = options.autoRestart ?? false;
+        this.waitForReady = options.waitForReady ?? true;
         this.client = options.client;
         this.token = options.token;
         if (!Cluster.isPrimary) return;
