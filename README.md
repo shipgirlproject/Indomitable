@@ -25,6 +25,14 @@
 
 * Very cute (and lazy like the Kaiju Princess! *If you know, you know*)
 
+## Used in prod by the ff:
+
+> Chip (https://chipbot.gg/)
+
+> Kashima (https://kashima.moe/) 
+
+> Or add your own!
+
 ## Installation
 
 * Stable
