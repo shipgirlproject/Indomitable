@@ -48,10 +48,10 @@ export class ShardClientUtil extends EventEmitter {
      * Evaluates a script or function on all clusters in the context of the your client
      * @returns A promise that resolves to an array of code results
      */
-    public broadcastEval(script: Function): Promise<any[]> {
+    public broadcastEval(script: Function, context: any = {}): Promise<any[]> {
         const content: InternalEvents = {
             op: ClientEvents.EVAL,
-            data: `(${script.toString()})(this)`,
+            data: `(${script.toString()})(this, ${JSON.stringify(context)})`,
             internal: true
         };
         return this.ipc.send({ content, repliable: true });
