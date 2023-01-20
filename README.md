@@ -29,7 +29,7 @@
 
 > Chip (https://chipbot.gg/)
 
-> Kashima (https://kashima.moe/) 
+> Kashima (https://kashima.saya.moe/) 
 
 > Or add your own!
 
