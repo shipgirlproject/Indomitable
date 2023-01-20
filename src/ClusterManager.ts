@@ -24,6 +24,8 @@ export class ClusterManager {
     public ipcId?: string;
     public worker?: Worker;
     public tickReady?: Function;
+    public ready: boolean;
+    public readyAt: number;
 
     /**
      * @param options.id Cluster ID
@@ -38,6 +40,8 @@ export class ClusterManager {
         this.started = false;
         this.worker = undefined;
         this.tickReady = undefined;
+        this.ready = false;
+        this.readyAt = -1;
     }
 
     /**
@@ -95,6 +99,8 @@ export class ClusterManager {
         this.ipc.flush(`Cluster exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.worker?.removeAllListeners();
         this.worker = undefined;
+        this.ready = false;
+        this.readyAt = -1;
         if (!this.worker) return;
         this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);

@@ -105,7 +105,11 @@ export class Main {
             switch(content.op) {
             case ClientEvents.READY: {
                 const cluster = this.manager.clusters!.get(content.data.clusterId);
-                if (cluster?.tickReady) cluster.tickReady();
+                if (cluster) {
+                    cluster.ready = true;
+                    cluster.readyAt = Date.now();
+                    if (cluster.tickReady) cluster.tickReady();
+                }
                 break;
             }
             case ClientEvents.PING: {
