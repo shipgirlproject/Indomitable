@@ -7,23 +7,23 @@
 
 > The ShipGirl Project; ⓒ Azur Lane
 
-* Supports Discord.JS `v13` and `v14`
+*    Supports Discord.JS `v13` and `v14`
 
 ## Features
 
-* Fast
+*    Fast
 
-* Lightweight
+*    Lightweight
 
-* Reliable
+*    Reliable
 
-* ESM & CommonJS supported
+*    ESM & CommonJS supported
 
-* Promisified IPC (Bi-directional)
+*    Promisified IPC (Bi-directional)
 
-* No dependencies (v2 onwards)
+*    No dependencies (v2 onwards)
 
-* Very cute (and lazy like the Kaiju Princess! *If you know, you know*)
+*    Very cute (and lazy like the Kaiju Princess! *If you know, you know*)
 
 ## Used in prod by the ff:
 
@@ -35,11 +35,11 @@
 
 ## Installation
 
-* Stable
+*    Stable
 
 > `npm install indomitable`
 
-* Dev
+*    Dev
 
 > `npm install https://github.com/Deivu/Indomitable.git#master`
 
@@ -168,11 +168,11 @@ client.shard.on('message', message => {
 
 ### Notes
 
-* You don't need to call `client.login('token');` yourself, Indomitable will call it for you.
+*    You don't need to call `client.login('token');` yourself, Indomitable will call it for you.
 
-* Extended clients that extend from discord.js client will work, as long as you use `client.login('token');` to get your bot running
+*    Extended clients that extend from discord.js client will work, as long as you use `client.login('token');` to get your bot running
 
-* Your Discord.JS Client ShardClientUtil is replaced with Indomitable's ShardClientUtil. Refer to our docs for documentation 🔗 https://deivu.github.io/Indomitable/classes/client_ShardClientUtil.ShardClientUtil.html
+*    Your Discord.JS Client ShardClientUtil is replaced with Indomitable's ShardClientUtil. Refer to our docs for documentation 🔗 https://deivu.github.io/Indomitable/classes/client_ShardClientUtil.ShardClientUtil.html
 
 ### Other Links
 
