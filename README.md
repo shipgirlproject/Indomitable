@@ -166,6 +166,23 @@ client.shard.on('message', message => {
 })
 ```
 
+> Reconfiguring Indomitable on the go to launch more clusters or more shard, or more on both
+```js
+// Reconfigure to launch more shards based on Discord Recommendation without spawning more clusters
+indomitable.reconfigure()
+    .then(() => console.log('Done, Indomitable is reconfigured'));
+// Reconfigure to launch more clusters based on your value, but leave the shards based on Discord's recommendation
+indomitable.reconfigure({ clusters: 8 })
+    .then(() => console.log('Done, Indomitable is reconfigured'));
+// Reconfigure to launch more clusters or shards based on your values
+indomitable.reconfigure({ clusters: 8, shards: 8 })
+    .then(() => console.log('Done, Indomitable is reconfigured'));
+// Do not run restart() or restartAll() while this is running. It will cause your cluster / clusters to restart twice.
+if (!indomitable.isBusy) indomitable.restartAll();
+// Do not use reconfigure for just restarting all clusters sequentially, still use .restartAll() for that
+indomitable.restartAll();
+```
+
 ### Notes
 
 *    You don't need to call `client.login('token');` yourself, Indomitable will call it for you.
