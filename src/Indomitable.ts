@@ -276,9 +276,7 @@ export class Indomitable extends EventEmitter {
             cluster.shards = chunks.shift()!;
         }
         this.emit(LibraryEvents.DEBUG, 'Clusters shard ranges reconfigured, moving to spawn queue');
-        // this.addToSpawnQueue() will not execute during reconfiguring to avoid issues
-        this.spawnQueue!.push(...this.clusters!.values());
-        await this.processQueue();
+        await this.addToSpawnQueue(...this.clusters!.values());
     }
 
     /**
@@ -286,7 +284,7 @@ export class Indomitable extends EventEmitter {
      * @internal
      */
     public addToSpawnQueue(...clusters: ClusterManager[]) {
-        if (!Cluster.isPrimary) return;
+        if (!Cluster.isPrimary) return Promise.resolve(undefined);
         this.spawnQueue!.push(...clusters);
         return this.processQueue();
     }
