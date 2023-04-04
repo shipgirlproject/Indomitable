@@ -271,7 +271,7 @@ export class Indomitable extends EventEmitter {
                 this.clusters!.delete(key);
             }
         }
-        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomtiable to use ${this.clusterCount} cluster(s) from ${oldClusterCount} cluster(s)`);
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.clusterCount} cluster(s) from ${oldClusterCount} cluster(s)`);
         for (const cluster of this.clusters!.values()) {
             cluster.shards = chunks.shift()!;
         }
