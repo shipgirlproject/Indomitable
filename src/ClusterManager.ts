@@ -18,8 +18,8 @@ export interface ClusterManagerOptions {
 export class ClusterManager {
     public readonly manager: Indomitable;
     public readonly id: number;
-    public readonly shards: number[];
     public readonly ipc: Main;
+    public shards: number[];
     public started: boolean;
     public ipcId?: string;
     public worker?: Worker;

@@ -24,6 +24,10 @@ export interface IndomitableOptions {
     token: string;
 }
 
+export interface ReconfigureOptions {
+    clusters?: number;
+    shards?: number;
+}
 export interface ShardEventData {
     clusterId: number,
     shardId?: number,
@@ -154,8 +158,16 @@ export class Indomitable extends EventEmitter {
         this.clusters = new Map();
         this.ipc = new PrimaryIpc(this);
         this.spawnQueue = [];
-        this.busy = false;
         this.cachedSession = undefined;
+        this.busy = false;
+    }
+
+    /**
+     * Checks the internal private flag if Indomitable is busy
+     * @returns Number of clusters in queue
+     */
+    get isBusy(): boolean {
+        return this.busy || false;
     }
 
     /**
@@ -228,6 +240,48 @@ export class Indomitable extends EventEmitter {
     }
 
     /**
+     * Reconfigures to launch more shards / clusters without killing the existing processes if possible to avoid big downtimes
+     * @remarks Never execute restart() or restartAll() during this process or else you will double restart that cluster / all clusters
+     * @returns A promise that resolves to void
+     */
+    public async reconfigure(options: ReconfigureOptions = {}): Promise<void> {
+        if (!Cluster.isPrimary || this.isBusy) return;
+        if (!options.shards) {
+            const sessions = await this.fetchSessions();
+            this.shardCount = sessions.shards;
+        }
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.shardCount} shard(s)`);
+        const oldClusterCount = Number(this.clusters!.size);
+        this.clusterCount = options.clusters || this.clusters!.size;
+        const shards = [...Array(this.shardCount).keys()];
+        const chunks = Chunk(shards, Math.round(this.shardCount as number / this.clusterCount));
+        if (oldClusterCount < this.clusterCount) {
+            const count = this.clusterCount - oldClusterCount;
+            for (let id = this.clusterCount - 1; id < count; id++) {
+                const cluster = new ClusterManager({ id, shards: [], manager: this });
+                this.clusters!.set(id, cluster);
+            }
+        }
+        if (oldClusterCount > this.clusterCount) {
+            const keys = [...this.clusters!.keys()].reverse();
+            const range = keys.slice(0, oldClusterCount - this.clusterCount);
+            for (const key of range) {
+                const cluster = this.clusters!.get(key);
+                cluster!.destroy();
+                this.clusters!.delete(key);
+            }
+        }
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomtiable to use ${this.clusterCount} cluster(s) from ${oldClusterCount} cluster(s)`);
+        for (const cluster of this.clusters!.values()) {
+            cluster.shards = chunks.shift()!;
+        }
+        this.emit(LibraryEvents.DEBUG, 'Clusters shard ranges reconfigured, moving to spawn queue');
+        // this.addToSpawnQueue() will not execute during reconfiguring to avoid issues
+        this.spawnQueue!.push(...this.clusters!.values());
+        await this.processQueue();
+    }
+
+    /**
      * Adds a cluster to spawn queue
      * @internal
      */
@@ -236,13 +290,12 @@ export class Indomitable extends EventEmitter {
         this.spawnQueue!.push(...clusters);
         return this.processQueue();
     }
-
     /**
      * Adds a cluster to spawn queue
      * @internal
      */
     private async processQueue(): Promise<void> {
-        if (this.busy || !this.spawnQueue!.length) return;
+        if (this.isBusy || !this.spawnQueue!.length) return;
         this.busy = true;
         this.emit(LibraryEvents.DEBUG, `Processing spawn queue with ${this.spawnQueue!.length} clusters waiting to be spawned....`);
         let cluster: ClusterManager;
