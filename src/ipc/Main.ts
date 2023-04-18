@@ -146,6 +146,12 @@ export class Main {
                 message.reply(this.manager.cachedSession);
                 break;
             }
+            case ClientEvents.REQUEST_IDENTIFY:
+                await this.manager.concurrencyManager!.waitForIdentify(content.data.shardId);
+                break;
+            case ClientEvents.CANCEL_IDENTIFY:
+                this.manager.concurrencyManager!.abortIdentify(content.data.shardId);
+                break;
             case ClientEvents.RESTART:
                 await this.manager.restart(content.data.clusterId);
                 break;

@@ -1,4 +1,6 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
+import type { VanguardOptions } from 'vanguard';
+import type { ConcurrencyManager } from './concurrency/ConcurrencyManager';
 import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
 import { MainUtil as PrimaryIpc } from './ipc/MainUtil';
@@ -6,6 +8,14 @@ import { ClusterManager } from './ClusterManager';
 import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
 import Os from 'node:os';
+
+/**
+ * Options to control Vanguard behavior
+ */
+export interface ConcurrencyOptions {
+    handle: boolean;
+    options?: VanguardOptions
+}
 
 /**
  * Options to control Indomitable behavior
@@ -19,6 +29,7 @@ export interface IndomitableOptions {
     spawnDelay?: number;
     autoRestart?: boolean;
     waitForReady?: boolean;
+    concurrencyOptions?: ConcurrencyOptions;
     client: typeof Client;
     token: string;
 }
@@ -114,8 +125,10 @@ export class Indomitable extends EventEmitter {
     public clusterCount: number|'auto';
     public shardCount: number|'auto';
     public cachedSession?: SessionObject;
+    public concurrencyManager?: ConcurrencyManager;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly clusterSettings: ClusterSettings;
+    public readonly concurrencyOptions: ConcurrencyOptions;
     public readonly spawnTimeout: number;
     public readonly spawnDelay: number;
     public readonly autoRestart: boolean;
@@ -144,6 +157,7 @@ export class Indomitable extends EventEmitter {
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
         this.clusterSettings = options.clusterSettings || {};
+        this.concurrencyOptions = options.concurrencyOptions || { handle: false };
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.autoRestart = options.autoRestart ?? false;
@@ -154,6 +168,7 @@ export class Indomitable extends EventEmitter {
         this.clusters = new Map();
         this.ipc = new PrimaryIpc(this);
         this.spawnQueue = [];
+        this.concurrencyManager = undefined;
         this.cachedSession = undefined;
         this.busy = false;
     }
@@ -179,8 +194,10 @@ export class Indomitable extends EventEmitter {
      * Gets the current session info of the bot token Indomitable currently handles
      * @returns Session Info
      */
-    public fetchSessions(): Promise<SessionObject> {
-        return FetchSessions(this.token);
+    public async fetchSessions(force = false): Promise<SessionObject> {
+        if (!force && this.cachedSession) return this.cachedSession;
+        this.cachedSession = await FetchSessions(this.token);
+        return this.cachedSession;
     }
 
     /**
@@ -193,11 +210,24 @@ export class Indomitable extends EventEmitter {
             await shardClient.start(this.token);
             return;
         }
+        // needs the 3 package to handle concurrency
+        if (this.concurrencyOptions.handle) {
+            const required = ['@discordjs/collection', '@sapphire/async-queue', 'vanguard'];
+            try {
+                await Promise.all(required.map(pkg => import(pkg)));
+            } catch (error) {
+                throw new Error(`In order to handle concurrency, please install the following optional modules: ${required.join(', ')}`);
+            }
+            const sessions = await this.fetchSessions();
+            const { ConcurrencyManager } = await import('./concurrency/ConcurrencyManager');
+            this.concurrencyManager = new ConcurrencyManager(sessions.session_start_limit.max_concurrency);
+            this.emit(LibraryEvents.DEBUG, 'Optional dependencies are installed, Indomitable will now handle concurrency for your shards');
+        }
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
         if (typeof this.shardCount !== 'number') {
-            this.cachedSession = await this.fetchSessions();
-            this.shardCount = this.cachedSession.shards;
+            const sessions = await this.fetchSessions();
+            this.shardCount = sessions.shards;
         }
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;

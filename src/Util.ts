@@ -7,6 +7,8 @@ export enum ClientEvents {
     EVAL = 'eval',
     RESTART = 'restart',
     RESTART_ALL = 'restartAll',
+    REQUEST_IDENTIFY = 'requestIdentify',
+    CANCEL_IDENTIFY = 'cancelIdentify',
     SESSION_INFO = 'sessionInfo',
     READY = 'ready',
     PING = 'ping',
