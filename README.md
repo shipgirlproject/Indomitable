@@ -183,6 +183,51 @@ if (!indomitable.isBusy) indomitable.restartAll();
 indomitable.restartAll();
 ```
 
+> Enabling concurrency handling (across all your shards) (Read Notes Below)
+```js
+const { Indomitable } = require('indomitable');
+const { Client } = require('discord.js');
+const token = 'your_token';
+
+const options = {
+    // Processes to run
+    clusterCount: 2,
+    // Websocket shards to run
+    shardCount: 8,
+    // Discord.JS options
+    clientOptions: {
+        intents: [1 << 0] // Bitwise for GUILD intent only
+    },
+    // Handle concurrency
+    concurrencyOptions: { 
+        handle: true,
+        options: {} // optional vanguard options refer to: https://github.com/Deivu/Vanguard/blob/c861adcbc96e6625aed081e236a8058e5df36789/src/Vanguard.ts#L10
+    },
+    // Auto restart processes that have been killed
+    autoRestart: true, // This defaults to false by default unless you specify it
+    // Your Discord.JS client
+    client: Client,
+    // Your bot token
+    token
+}
+
+const manager = new Indomitable(options)
+    .on('error', console.error);
+
+manager.spawn();
+```
+
+* You need to install 3 optional deps to handle concurrency `npm i @discordjs/collection`, `npm i @sapphire/async-queue`, `npm i https://github.com/Deivu/Vanguard.git`. They are optional as handling concurrency is **disabled** by default and is left to original d.js implementation.
+
+* `https://github.com/Deivu/Vanguard.git` is a non npm package I made that is my own performat translation layer of @discordjs/ws to Discord.JS v14. View it at: 🔗 https://github.com/Deivu/Vanguard
+
+* The sharder will throw an error and will not continue if you enabled concurrency without this optional dependencies
+
+* This handling will work in **any shard # and cluster #** regardless
+
+* Pair this with **waitForReady** disabled and you will get blazingly fast boot times, specially for those who have access to big bot sharding.
+
+
 ### Notes
 
 *    You don't need to call `client.login('token');` yourself, Indomitable will call it for you.
