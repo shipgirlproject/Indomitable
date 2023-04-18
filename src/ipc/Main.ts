@@ -2,7 +2,7 @@ import { Serializable } from 'node:child_process';
 import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable';
 import { ClusterManager } from '../ClusterManager';
-import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalPromise, InternalError } from '../Util';
+import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalPromise, InternalError, InternalAbortSignal } from '../Util';
 
 export class Main {
     public readonly cluster: ClusterManager;
@@ -23,7 +23,9 @@ export class Main {
     public flush(reason: string): void {
         const error = new Error(reason);
         for (const promise of this.promises.values()) {
-            clearTimeout(promise.timeout);
+            if (promise.controller) {
+                promise.controller.signal.removeEventListener('abort', promise.controller.listener);
+            }
             promise.reject(error);
         }
         this.promises.clear();
@@ -45,11 +47,19 @@ export class Main {
             };
             this.cluster.worker.send(data);
             if (!id) return resolve(undefined);
-            const timeout = setTimeout(() => {
-                this.promises.delete(id);
-                reject(new Error('This request timed out'));
-            }, this.manager.ipcTimeout).unref();
-            this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
+            let controller: InternalAbortSignal|undefined;
+            if (transportable.signal) {
+                const listener = () => {
+                    this.promises.delete(id);
+                    reject(new Error('This operation is aborted'));
+                };
+                controller = {
+                    listener,
+                    signal: transportable.signal
+                };
+                controller.signal.addEventListener('abort', listener);
+            }
+            this.promises.set(id, { resolve, reject, controller } as InternalPromise);
         });
     }
 
@@ -57,10 +67,12 @@ export class Main {
         try {
             if (!(data as any).internal)
                 return this.manager.emit(LibraryEvents.MESSAGE, data);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
-                return await this.message(data as RawIpcMessage);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
+            switch((data as RawIpcMessage).type) {
+            case RawIpcMessageType.MESSAGE:
+                return this.message(data as RawIpcMessage);
+            case RawIpcMessageType.RESPONSE:
                 return this.promise(data as RawIpcMessage);
+            }
         } catch (error: unknown) {
             this.manager.emit(LibraryEvents.ERROR, error as Error);
         }
@@ -71,7 +83,9 @@ export class Main {
         const promise = this.promises.get(id);
         if (!promise) return;
         this.promises.delete(id);
-        clearTimeout(promise.timeout);
+        if (promise.controller) {
+            promise.controller.signal.removeEventListener('abort', promise.controller.listener);
+        }
         if (data.content?.internal && data.content?.error) {
             const error = new Error(data.content.reason || 'Unknown error reason');
             error.stack = data.content.stack;

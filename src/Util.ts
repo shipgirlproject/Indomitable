@@ -41,7 +41,8 @@ export enum LibraryEvents {
  */
 export enum RawIpcMessageType {
     MESSAGE = 'message',
-    RESPONSE = 'response'
+    RESPONSE = 'response',
+    ABORT = 'abort'
 }
 
 /**
@@ -70,6 +71,12 @@ export interface InternalError {
 export interface Transportable {
     content: any;
     repliable?: boolean;
+    signal?: AbortSignal
+}
+
+export interface InternalAbortSignal {
+    listener: () => void,
+    signal: AbortSignal
 }
 
 /**
@@ -78,7 +85,7 @@ export interface Transportable {
 export interface InternalPromise {
     resolve: Function;
     reject: Function;
-    timeout: NodeJS.Timeout;
+    controller?: InternalAbortSignal;
 }
 
 /**

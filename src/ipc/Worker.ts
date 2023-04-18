@@ -1,7 +1,7 @@
 import { ChildProcess, Serializable } from 'node:child_process';
 import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable';
-import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError, RawIpcMessage, RawIpcMessageType, InternalPromise } from '../Util';
+import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError, RawIpcMessage, RawIpcMessageType, InternalPromise, InternalAbortSignal } from '../Util';
 import { ShardClientUtil } from '../client/ShardClientUtil';
 
 export class Worker {
@@ -22,7 +22,9 @@ export class Worker {
     public flush(reason: string): void {
         const error = new Error(reason);
         for (const promise of this.promises.values()) {
-            clearTimeout(promise.timeout);
+            if (promise.controller) {
+                promise.controller.signal.removeEventListener('abort', promise.controller.listener);
+            }
             promise.reject(error);
         }
         this.promises.clear();
@@ -55,11 +57,19 @@ export class Worker {
                 return reject(error);
             }
             if (!id) return resolve(undefined);
-            const timeout = setTimeout(() => {
-                this.promises.delete(id);
-                reject(new Error('This request timed out'));
-            }, this.manager.ipcTimeout).unref();
-            this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
+            let controller: InternalAbortSignal|undefined;
+            if (transportable.signal) {
+                const listener = () => {
+                    this.promises.delete(id);
+                    reject(new Error('This operation is aborted'));
+                };
+                controller = {
+                    listener,
+                    signal: transportable.signal
+                };
+                controller.signal.addEventListener('abort', listener);
+            }
+            this.promises.set(id, { resolve, reject, controller } as InternalPromise);
         });
     }
 
@@ -67,10 +77,12 @@ export class Worker {
         try {
             if (!(data as any).internal)
                 return this.manager.emit(LibraryEvents.MESSAGE, data);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
+            switch((data as RawIpcMessage).type) {
+            case RawIpcMessageType.MESSAGE:
                 return this.message(data as RawIpcMessage);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
+            case RawIpcMessageType.RESPONSE:
                 return this.promise(data as RawIpcMessage);
+            }
         } catch (error: unknown) {
             // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
             this.shard.client.emit(LibraryEvents.ERROR, error as Error);
@@ -82,7 +94,9 @@ export class Worker {
         const promise = this.promises.get(id);
         if (!promise) return;
         this.promises.delete(id);
-        clearTimeout(promise.timeout);
+        if (promise.controller) {
+            promise.controller.signal.removeEventListener('abort', promise.controller.listener);
+        }
         if (data.content?.internal && data.content?.error) {
             const error = new Error(data.content.reason || 'Unknown error reason');
             error.stack = data.content.stack;

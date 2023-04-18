@@ -15,7 +15,6 @@ export interface IndomitableOptions {
     shardCount?: number|'auto';
     clientOptions?: DiscordJsClientOptions;
     clusterSettings?: ClusterSettings;
-    ipcTimeout?: number;
     spawnTimeout?: number;
     spawnDelay?: number;
     autoRestart?: boolean;
@@ -117,7 +116,6 @@ export class Indomitable extends EventEmitter {
     public cachedSession?: SessionObject;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly clusterSettings: ClusterSettings;
-    public readonly ipcTimeout: number;
     public readonly spawnTimeout: number;
     public readonly spawnDelay: number;
     public readonly autoRestart: boolean;
@@ -133,7 +131,6 @@ export class Indomitable extends EventEmitter {
      * @param [options.shardCount=auto] The number of shards to create. Expects a number or 'auto'
      * @param [options.clientOptions] Options for the Discord.js client
      * @param [options.clusterSettings] Options for the forked process
-     * @param [options.ipcTimeout] Time to wait before reporting a failed IPC connection
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
      * @param [options.spawnDelay] Time to wait before spawing another child process
      * @param [options.autoRestart] Whether to automatically restart shards that have been killed unintentionally
@@ -147,7 +144,6 @@ export class Indomitable extends EventEmitter {
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
         this.clusterSettings = options.clusterSettings || {};
-        this.ipcTimeout = options.ipcTimeout ?? 30000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.autoRestart = options.autoRestart ?? false;
