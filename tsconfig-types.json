@@ -1,7 +1,6 @@
 {
-    "extends": "./tsconfig-base.json",
+    "extends": "./tsconfig.json",
     "compilerOptions": {
-      "module": "commonjs",
       "declaration": true,                              
       "declarationMap": true,                           
       "emitDeclarationOnly": true,                      

@@ -15,7 +15,7 @@
   },
   "scripts": {
     "build": "npm run build:ts && npm run build:docs",
-    "build:ts": "tsc -p tsconfig-types.json && tsc -p tsconfig-esm.json && tsc -p tsconfig-cjs.json",
+    "build:ts": "tsc -p tsconfig-types.json && tsc -p tsconfig.json && tsc -p tsconfig-cjs.json",
     "build:docs": "typedoc --theme default --readme README.md --out docs/ --entryPointStrategy expand src/.",
     "prepare": "npm run build:ts"
   },

@@ -1,5 +1,8 @@
 {
   "compilerOptions": {
+    "module": "es2022",
+    "moduleResolution": "node16",
+    "outDir": "dist/build/esm",
     "target": "es2022",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
