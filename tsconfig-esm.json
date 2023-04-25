@@ -1,0 +1,8 @@
+{
+    "extends": "./tsconfig-base.json",
+    "compilerOptions": {
+        "module": "es2022",
+        "moduleResolution": "node16",
+        "outDir": "dist/build/esm"
+    }
+}
