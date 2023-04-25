@@ -1,0 +1,13 @@
+.github
+.idea
+.vscode
+assets/
+docs/
+src/
+.eslintignore
+.eslintrc.json
+.gitattributes
+.gitignore
+index.ts
+tsconfig.json
+tsconfig-**.json
