@@ -9,5 +9,6 @@ src/
 .gitattributes
 .gitignore
 index.ts
+**.tgz
 tsconfig.json
 tsconfig-**.json
