@@ -1,0 +1,9 @@
+{
+    "dts": true,
+    "entry": ["index.ts"],
+    "splitting": false,
+    "sourcemap": true,
+    "bundle": false,
+    "clean": true,
+    "format": ["esm", "cjs"]
+}

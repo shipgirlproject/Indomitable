@@ -12,3 +12,4 @@ index.ts
 **.tgz
 tsconfig.json
 tsconfig-**.json
+tsup.config.json
