@@ -102,7 +102,7 @@ client.shard
     .then(console.log);
 ```
 
-> Example of a very basic ipc comunication (non repliable)
+> Example of a very basic ipc communication (non repliable)
 ```js
 // Primary Process
 indomitable.on('message', message => {
@@ -115,7 +115,7 @@ client.shard.send({ content: { op: 'something' } })
     .catch(console.error);
 ```
 
-> Example of a very basic ipc comunication (repliable)
+> Example of a very basic ipc communication (repliable)
 ```js
 // Primary Process
 indomitable.on('message', message => {
@@ -131,7 +131,7 @@ client.shard.send({ content: { op: 'something' }, repliable: true })
     .catch(console.error);
 ```
 
-> You could also do it reversely (main process asking data from clusters instead of clusters asking to main process)
+> You could also do it reversely (main process asking data from clusters instead of clusters asking main process)
 ```js
 // Primary Process
 // send to specific cluster 
@@ -139,14 +139,14 @@ indomitable.ipc.send(0, { content: { op: 'nya' } })
     .catch(console.error);
 // send to specific cluster with repliable
 indomitable.ipc.send(0, { content: { op: 'something' }, repliable: true })
-    .then(console.log);
+    .then(console.log)
     .catch(console.error);
 // broadcast to all clusters
 indomitable.ipc.broadcast({ content: { op: 'meow' } })
     .catch(console.error);
 // broadcast to all clusters with repliable is possible as well
 indomitable.ipc.broadcast({ content: { op: 'meow' }, repliable: true })
-    .then(console.log);
+    .then(console.log)
     .catch(console.error);
 
 // Worker Process (your client most likely)
@@ -179,18 +179,18 @@ client.shard.on('message', message => {
 [Support](https://discord.gg/FVqbtGu) (#Development)
 
 ### Indomitable Options
- Option | Type | Description | Required | Default |
---------|------|-------------|----------|---------|
-clusterCount | number or 'auto' | How many clusters we should spawn | No  | 'auto'
-shardCount | number or 'auto' | How many websocket shards we should make | No | 'auto'
-clientOptions | Object | Discord.JS Client Options | No | {}
-clusterSettings | Object | Options for the forked process | No | {}
-ipcTimeout | number | Timeout before we fail a request | No | 30000
-spawnTimeout | number | Timeout before we fail a cluster spawn | No | 60000 (multiplied by clusterShardCount internally)
-spawnDelay | number | Time to wait before spawning a new cluster | No | 5000
-autoRestart | boolean | If you want to auto restart the shards that have been killed unintentionally | No | false
-waitForReady | boolean | If you want to wait for cluster ready before spawning another cluster | No | true
-client | Client | Your Discord.JS non modified OR modified client | Yes | None |
-token | string | The token of your bot | Yes | None |
+| Option          | Type             | Description                                                                  | Required | Default                                            |
+|-----------------|------------------|------------------------------------------------------------------------------|----------|----------------------------------------------------|
+| clusterCount    | number or 'auto' | How many clusters we should spawn                                            | No       | 'auto'                                             |
+| shardCount      | number or 'auto' | How many websocket shards we should make                                     | No       | 'auto'                                             |
+| clientOptions   | Object           | Discord.JS Client Options                                                    | No       | {}                                                 |
+| clusterSettings | Object           | Options for the forked process                                               | No       | {}                                                 |
+| ipcTimeout      | number           | Timeout before we fail a request                                             | No       | 30000                                              |
+| spawnTimeout    | number           | Timeout before we fail a cluster spawn                                       | No       | 60000 (multiplied by clusterShardCount internally) |
+| spawnDelay      | number           | Time to wait before spawning a new cluster                                   | No       | 5000                                               |
+| autoRestart     | boolean          | If you want to auto restart the shards that have been killed unintentionally | No       | false                                              |
+| waitForReady    | boolean          | If you want to wait for cluster ready before spawning another cluster        | No       | true                                               |
+| client          | Client           | Your Discord.JS non modified OR modified client                              | Yes      | None                                               |
+| token           | string           | The token of your bot                                                        | Yes      | None                                               |
 
 ### Made with ❤ by @Sāya#0113 (https://github.com/Deivu/)
