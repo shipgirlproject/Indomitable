@@ -202,7 +202,6 @@ export class Indomitable extends EventEmitter {
             await shardClient.start(this.token);
             return;
         }
-        // needs the 3 package to handle concurrency
         if (this.handleConcurrency) {
             const sessions = await this.fetchSessions();
             this.concurrencyManager = new ConcurrencyManager(sessions.session_start_limit.max_concurrency);
