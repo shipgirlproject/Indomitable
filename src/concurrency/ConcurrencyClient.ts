@@ -1,7 +1,7 @@
 import { ShardClientUtil } from '../client/ShardClientUtil';
 import { ClientEvents, InternalEvents } from '../Util';
 
-export class Concurrency {
+export class ConcurrencyClient {
     private shard: ShardClientUtil;
     constructor(shard: ShardClientUtil) {
         this.shard = shard;

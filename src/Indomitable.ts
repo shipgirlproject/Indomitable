@@ -1,21 +1,12 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
-import type { VanguardOptions } from 'vanguard';
-import type { ConcurrencyManager } from './concurrency/ConcurrencyManager';
+import Cluster, { ClusterSettings } from 'node:cluster';
+import { ConcurrencyManager } from './concurrency/ConcurrencyManager';
 import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
 import { MainUtil as PrimaryIpc } from './ipc/MainUtil';
 import { ClusterManager } from './ClusterManager';
-import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
 import Os from 'node:os';
-
-/**
- * Options to control Vanguard behavior
- */
-export interface ConcurrencyOptions {
-    handle: boolean;
-    options?: VanguardOptions
-}
 
 /**
  * Options to control Indomitable behavior
@@ -29,7 +20,7 @@ export interface IndomitableOptions {
     spawnDelay?: number;
     autoRestart?: boolean;
     waitForReady?: boolean;
-    concurrencyOptions?: ConcurrencyOptions;
+    handleConcurrency?: boolean;
     client: typeof Client;
     token: string;
 }
@@ -128,11 +119,11 @@ export class Indomitable extends EventEmitter {
     public concurrencyManager?: ConcurrencyManager;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly clusterSettings: ClusterSettings;
-    public readonly concurrencyOptions: ConcurrencyOptions;
     public readonly spawnTimeout: number;
     public readonly spawnDelay: number;
     public readonly autoRestart: boolean;
     public readonly waitForReady: boolean;
+    public readonly handleConcurrency: boolean;
     public readonly client: typeof Client;
     public readonly clusters?: Map<number, ClusterManager>;
     public readonly ipc?: PrimaryIpc;
@@ -145,9 +136,10 @@ export class Indomitable extends EventEmitter {
      * @param [options.clientOptions] Options for the Discord.js client
      * @param [options.clusterSettings] Options for the forked process
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
-     * @param [options.spawnDelay] Time to wait before spawing another child process
+     * @param [options.spawnDelay] Time to wait before spawning another child process
      * @param [options.autoRestart] Whether to automatically restart shards that have been killed unintentionally
      * @param [options.waitForReady] Whether to wait for clusters to be ready before spawning a new one
+     * @param [options.handleConcurrency] Whether you want to handle concurrency properly. Enabling this may result into more stable connection
      * @param [options.client] A Discord.js client class or a modified Discord.js client class
      * @param options.token Discord bot token
      */
@@ -157,11 +149,11 @@ export class Indomitable extends EventEmitter {
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
         this.clusterSettings = options.clusterSettings || {};
-        this.concurrencyOptions = options.concurrencyOptions || { handle: false };
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.autoRestart = options.autoRestart ?? false;
         this.waitForReady = options.waitForReady ?? true;
+        this.handleConcurrency = options.handleConcurrency ?? false;
         this.client = options.client;
         this.token = options.token;
         if (!Cluster.isPrimary) return;
@@ -211,17 +203,10 @@ export class Indomitable extends EventEmitter {
             return;
         }
         // needs the 3 package to handle concurrency
-        if (this.concurrencyOptions.handle) {
-            const required = ['@discordjs/collection', '@sapphire/async-queue', 'vanguard'];
-            try {
-                await Promise.all(required.map(pkg => import(pkg)));
-            } catch (error) {
-                throw new Error(`In order to handle concurrency, please install the following optional modules: ${required.join(', ')}`);
-            }
+        if (this.handleConcurrency) {
             const sessions = await this.fetchSessions();
-            const { ConcurrencyManager } = await import('./concurrency/ConcurrencyManager');
             this.concurrencyManager = new ConcurrencyManager(sessions.session_start_limit.max_concurrency);
-            this.emit(LibraryEvents.DEBUG, 'Optional dependencies are installed, Indomitable will now handle concurrency for your shards');
+            this.emit(LibraryEvents.DEBUG, 'Handle concurrency is currently enabled. Indomitable will automatically handle your identifies that can result to more stable connection');
         }
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;

@@ -1,41 +1,27 @@
-import { Collection } from '@discordjs/collection';
-import { AsyncQueue } from '@sapphire/async-queue';
-import { Delay } from '../Util';
+import { SimpleIdentifyThrottler } from '@discordjs/ws';
 
 /**
- * Based on @discordjs/ws simple concurrency handling, with things to make it work with indomitable
+ * A wrapper for @discordjs/ws to work exclusively with Indomitable's dynamic concurrency with support for abort controller
  */
 
-export interface Bucket {
-    queue: AsyncQueue;
-    resetsAt: number;
-}
-
 export class ConcurrencyManager {
-    private readonly concurrency: number;
-    private readonly buckets: Collection<number, Bucket>;
-    private readonly signals: Collection<number, AbortController>;
+    private readonly throttler: SimpleIdentifyThrottler;
+    private readonly signals: Map<number, AbortController>;
     constructor(concurrency: number) {
-        this.concurrency = concurrency;
-        this.buckets = new Collection();
-        this.signals = new Collection();
+        this.throttler = new SimpleIdentifyThrottler(concurrency);
+        this.signals = new Map();
     }
 
     public async waitForIdentify(shardId: number): Promise<void> {
-        const key = shardId % this.concurrency;
-        const bucket = this.buckets.ensure(key, () => ({ queue: new AsyncQueue(), resetsAt: Infinity }));
-        const controller = this.signals.ensure(key, () => new AbortController());
         try {
-            await bucket.queue.wait({ signal: controller.signal });
-            const diff = bucket.resetsAt - Date.now();
-            if (diff <= 5000) {
-                const time = diff + 500;
-                await Delay(time);
+            let abort = this.signals.get(shardId);
+            if (!abort) {
+                abort = new AbortController();
+                this.signals.set(shardId, abort);
             }
-            bucket.resetsAt = Date.now() + 5000;
+            await this.throttler.waitForIdentify(shardId, abort.signal);
         } finally {
             this.signals.delete(shardId);
-            bucket.queue.shift();
         }
     }
 

@@ -1,7 +1,9 @@
 import type { Client, ClientOptions as DiscordJsClientOptions  } from 'discord.js';
+import type { WebSocketManager } from '@discordjs/ws';
 import { Indomitable } from '../Indomitable';
 import { ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ShardClientUtil } from './ShardClientUtil';
+import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
 
 export interface PartialInternalEvents {
     op: ClientEvents,
@@ -21,20 +23,19 @@ export class ShardClient {
         client.shard = new ShardClientUtil(manager, client);
         this.client = client;
         this.clusterId = Number(process.env.CLUSTER);
+        if (!manager.handleConcurrency) return;
+        this.ws.options.buildIdentifyThrottler = () => {
+            const manager = new ConcurrencyClient(client.shard as unknown as ShardClientUtil);
+            return Promise.resolve(manager);
+        };
+    }
+
+    get ws(): WebSocketManager {
+        // @ts-expect-error: access internal ws class to modify options
+        return this.client.ws._ws;
     }
 
     public async start(token: string): Promise<void> {
-        if (this.manager.concurrencyOptions.handle) {
-            const { WebsocketProxy } = await import('vanguard');
-            const { Concurrency } = await import('../concurrency/Concurrency');
-            if (!this.manager.concurrencyOptions.options) this.manager.concurrencyOptions.options = {};
-            // @ts-expect-error -- ws proxy should automatically populate missing values
-            if (!this.manager.concurrencyOptions.options.sharderOptions) this.manager.concurrencyOptions.options.sharderOptions = {};
-            // @ts-expect-error -- ws proxy should automatically populate missing values
-            this.manager.concurrencyOptions.options.sharderOptions.buildIdentifyThrottler = async () => new Concurrency(this.client.shard as ShardClientUtil);
-            // @ts-expect-error -- custom websocket class
-            this.client.ws = new WebsocketProxy(this.client);
-        }
         // attach listeners
         this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));
         this.client.on('shardReady', (shardId: number) => this.send({ op: ClientEvents.SHARD_READY, data: { clusterId: this.clusterId, shardId }}));

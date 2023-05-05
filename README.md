@@ -198,13 +198,11 @@ const options = {
     clientOptions: {
         intents: [1 << 0] // Bitwise for GUILD intent only
     },
-    // Handle concurrency
-    concurrencyOptions: { 
-        handle: true,
-        options: {} // optional vanguard options refer to: https://github.com/Deivu/Vanguard/blob/c861adcbc96e6625aed081e236a8058e5df36789/src/Vanguard.ts#L10
-    },
     // Auto restart processes that have been killed
-    autoRestart: true, // This defaults to false by default unless you specify it
+    // This defaults to false by default unless you specify it
+    autoRestart: true, 
+    // Enable max concurrency handling
+    handleConcurrency: true,
     // Your Discord.JS client
     client: Client,
     // Your bot token
@@ -217,16 +215,11 @@ const manager = new Indomitable(options)
 manager.spawn();
 ```
 
-* You need to install 3 optional deps to handle concurrency `npm i @discordjs/collection`, `npm i @sapphire/async-queue`, `npm i https://github.com/Deivu/Vanguard.git`. They are optional as handling concurrency is **disabled** by default and is left to original d.js implementation.
-
-* `https://github.com/Deivu/Vanguard.git` is a non npm package I made that is my own performat translation layer of @discordjs/ws to Discord.JS v14. View it at: 🔗 https://github.com/Deivu/Vanguard
-
-* The sharder will throw an error and will not continue if you enabled concurrency without this optional dependencies
-
 * This handling will work in **any shard # and cluster #** regardless
 
 * Pair this with **waitForReady** disabled and you will get blazingly fast boot times, specially for those who have access to big bot sharding.
 
+* Reduces your identify calls by following global max_concurrency identifies resulting into better connection quality
 
 ### Notes
 
