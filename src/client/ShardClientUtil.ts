@@ -6,7 +6,7 @@ import EventEmitter from 'node:events';
 
 export declare interface ShardClientUtil {
     /**
-     * Emmited when an IPC message from parent process is recieved
+     * Emitted when an IPC message from parent process is received
      * @eventProperty
      */
     on(event: 'message', listener: (message: Message|unknown) => void): this;
@@ -30,10 +30,10 @@ export class ShardClientUtil extends EventEmitter {
         this.client = client;
         this.mode = 'cluster';
         this.ipc = new WorkerIpc(this, manager);
-        this.clusterId = Number(process.env.CLUSTER);
-        this.clusterCount = Number(process.env.CLUSTER_TOTAL);
+        this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
+        this.clusterCount = Number(process.env.INDOMITABLE_CLUSTER_TOTAL);
         this.shardIds = this.client.options.shards as number[];
-        this.shardCount = Number(process.env.SHARDS_TOTAL);
+        this.shardCount = Number(process.env.INDOMITABLE_SHARDS_TOTAL);
     }
 
     /**
@@ -45,7 +45,7 @@ export class ShardClientUtil extends EventEmitter {
     }
 
     /**
-     * Evaluates a script or function on all clusters in the context of the your client
+     * Evaluates a script or function on all clusters in the context of the client
      * @returns A promise that resolves to an array of code results
      */
     public broadcastEval(script: Function, context: any = {}): Promise<any[]> {
@@ -106,8 +106,8 @@ export class ShardClientUtil extends EventEmitter {
     }
 
     /**
-     * Shorcut to send a message to the parent process
-     * @returns A promise that resolves to void or an repliable object
+     * Shortcut to send a message to the parent process
+     * @returns A promise that resolves to void or a repliable object
      */
     public send(transportable: Transportable): Promise<any|void> {
         return this.ipc.send(transportable);

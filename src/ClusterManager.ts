@@ -70,10 +70,10 @@ export class ClusterManager {
     public async spawn() {
         this.manager.emit(LibraryEvents.DEBUG, `Spawning Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
         this.worker = Cluster.fork({
-            SHARDS: this.shards.join(' '),
-            SHARDS_TOTAL: this.manager.shardCount.toString(),
-            CLUSTER: this.id.toString(),
-            CLUSTER_TOTAL: this.manager.clusterCount.toString(),
+            INDOMITABLE_SHARDS: this.shards.join(' '),
+            INDOMITABLE_SHARDS_TOTAL: this.manager.shardCount.toString(),
+            INDOMITABLE_CLUSTER: this.id.toString(),
+            INDOMITABLE_CLUSTER_TOTAL: this.manager.clusterCount.toString(),
             ...process.env
         });
         this.worker
@@ -86,7 +86,7 @@ export class ClusterManager {
             });
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         if (this.manager.waitForReady) await this.wait();
-        this.manager.emit(LibraryEvents.DEBUG, `Succesfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)! | Waited for cluster ready? ${this.manager.waitForReady}`);
+        this.manager.emit(LibraryEvents.DEBUG, `Successfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)! | Waited for cluster ready? ${this.manager.waitForReady}`);
         this.manager.emit(LibraryEvents.WORKER_READY, this);
         await Delay(this.manager.spawnDelay);
         if (!this.started) this.started = true;

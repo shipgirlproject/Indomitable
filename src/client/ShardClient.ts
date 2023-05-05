@@ -1,6 +1,6 @@
 import type { Client, ClientOptions as DiscordJsClientOptions  } from 'discord.js';
 import { Indomitable } from '../Indomitable';
-import { ClientEvents, InternalEvents, LibraryEvents, Transportable } from '../Util';
+import { ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ShardClientUtil } from './ShardClientUtil';
 
 export interface PartialInternalEvents {
@@ -12,20 +12,17 @@ export class ShardClient {
     public readonly client: Client;
     public readonly clusterId: number;
     public constructor(public manager: Indomitable) {
-        const env = process.env;
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
-        clientOptions.shards = env.SHARDS!.split(' ').map(Number);
-        clientOptions.shardCount = Number(env.SHARDS_TOTAL);
+        clientOptions.shards = process.env.INDOMITABLE_SHARDS!.split(' ').map(Number);
+        clientOptions.shardCount = Number(process.env.INDOMITABLE_SHARDS_TOTAL);
         const client = new manager.client(clientOptions);
         // @ts-ignore -- our own class
         client.shard = new ShardClientUtil(manager, client);
         this.client = client;
-        this.clusterId = Number(process.env.CLUSTER);
+        this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
     }
 
     public async start(token: string): Promise<void> {
-        // @ts-ignore -- our own class
-        const shardClientUtil = this.client.shard as ShardClientUtil;
         // attach listeners
         this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));
         this.client.on('shardReady', (shardId: number) => this.send({ op: ClientEvents.SHARD_READY, data: { clusterId: this.clusterId, shardId }}));

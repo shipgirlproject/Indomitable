@@ -139,7 +139,7 @@ export class Main {
                 await this.manager.restartAll();
                 break;
             default:
-                // shardReconect, shardResume etc
+                // shardReconnect, shardResume etc
                 this.manager.emit(content.op, content.data);
             }
         } catch (error: any) {

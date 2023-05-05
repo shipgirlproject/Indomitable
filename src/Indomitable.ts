@@ -38,7 +38,7 @@ export declare interface Indomitable {
      */
     on(event: 'debug', listener: (message: string) => void): this;
     /**
-     * Emmited when an IPC message is recieved
+     * Emitted when an IPC message is received
      * @eventProperty
      */
     on(event: 'message', listener: (message: Message|unknown) => void): this;
@@ -131,7 +131,7 @@ export class Indomitable extends EventEmitter {
      * @param [options.clusterSettings] Options for the forked process
      * @param [options.ipcTimeout] Time to wait before reporting a failed IPC connection
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
-     * @param [options.spawnDelay] Time to wait before spawing another child process
+     * @param [options.spawnDelay] Time to wait before spawning another child process
      * @param [options.autoRestart] Whether to automatically restart shards that have been killed unintentionally
      * @param [options.waitForReady] Whether to wait for clusters to be ready before spawning a new one
      * @param [options.client] A Discord.js client class or a modified Discord.js client class
@@ -256,7 +256,7 @@ export class Indomitable extends EventEmitter {
             } catch (error: unknown) {
                 this.emit(LibraryEvents.ERROR, error as Error);
                 if (cluster! && this.autoRestart) {
-                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Requeuing...`);
+                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Re-queuing...`);
                     if (!this.spawnQueue!.includes(cluster)) this.spawnQueue!.push(cluster);
                 }
             }
