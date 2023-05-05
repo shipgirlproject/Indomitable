@@ -101,7 +101,7 @@ export interface RawIpcMessage {
 }
 
 /**
- * Data structure representing a IPC message
+ * Data structure representing an IPC message
  */
 export interface Message {
     reply: (data: any) => void;
@@ -164,7 +164,7 @@ export async function FetchSessions(token: string): Promise<SessionObject> {
 }
 
 /**
- * Modify an array to contain a the specified amount of chunks
+ * Modify an array to contain the specified amount of chunks
  * @param original An array of data
  * @param chunks The amount of chunks to transform into
  * @returns A modified array

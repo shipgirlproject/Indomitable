@@ -1,9 +1,9 @@
-import type { Client, ClientOptions as DiscordJsClientOptions  } from 'discord.js';
+import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
 import type { WebSocketManager } from '@discordjs/ws';
 import { Indomitable } from '../Indomitable';
 import { ClientEvents, InternalEvents, LibraryEvents } from '../Util';
-import { ShardClientUtil } from './ShardClientUtil';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
+import { ShardClientUtil } from './ShardClientUtil';
 
 export interface PartialInternalEvents {
     op: ClientEvents,
@@ -13,16 +13,15 @@ export interface PartialInternalEvents {
 export class ShardClient {
     public readonly client: Client;
     public readonly clusterId: number;
-    constructor(public manager: Indomitable) {
-        const env = process.env;
+    public constructor(public manager: Indomitable) {
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
-        clientOptions.shards = env.SHARDS!.split(' ').map(Number);
-        clientOptions.shardCount = Number(env.SHARDS_TOTAL);
+        clientOptions.shards = process.env.INDOMITABLE_SHARDS!.split(' ').map(Number);
+        clientOptions.shardCount = Number(process.env.INDOMITABLE_SHARDS_TOTAL);
         const client = new manager.client(clientOptions);
         // @ts-ignore -- our own class
         client.shard = new ShardClientUtil(manager, client);
         this.client = client;
-        this.clusterId = Number(process.env.CLUSTER);
+        this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
         if (!manager.handleConcurrency) return;
         this.ws.options.buildIdentifyThrottler = () => {
             const manager = new ConcurrencyClient(client.shard as unknown as ShardClientUtil);

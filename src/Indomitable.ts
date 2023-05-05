@@ -43,7 +43,7 @@ export declare interface Indomitable {
      */
     on(event: 'debug', listener: (message: string) => void): this;
     /**
-     * Emmited when an IPC message is recieved
+     * Emitted when an IPC message is received
      * @eventProperty
      */
     on(event: 'message', listener: (message: Message|unknown) => void): this;
@@ -318,7 +318,7 @@ export class Indomitable extends EventEmitter {
             } catch (error: unknown) {
                 this.emit(LibraryEvents.ERROR, error as Error);
                 if (cluster! && this.autoRestart) {
-                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Requeuing...`);
+                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Re-queuing...`);
                     if (!this.spawnQueue!.includes(cluster)) this.spawnQueue!.push(cluster);
                 }
             }
