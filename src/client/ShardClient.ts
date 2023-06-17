@@ -16,6 +16,7 @@ export class ShardClient {
     public constructor(public manager: Indomitable) {
         // pseudo initialize shard client util to make the concurrency client work
         const shardClientUtil = new ShardClientUtil(manager, {} as unknown as Client);
+        const concurrencyClient = new ConcurrencyClient(shardClientUtil);
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
         clientOptions.shards = shardClientUtil.shardIds;
         clientOptions.shardCount = shardClientUtil.shardCount;
@@ -26,10 +27,7 @@ export class ShardClient {
             if (!clientOptions.ws.buildStrategy) {
                 clientOptions.ws.buildStrategy = manager => {
                     const strategy = new SimpleShardingStrategy(manager);
-                    manager.options.buildIdentifyThrottler = () => {
-                        const manager = new ConcurrencyClient(shardClientUtil);
-                        return Promise.resolve(manager);
-                    };
+                    manager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
                     return strategy;
                 };
             } else {
@@ -37,10 +35,7 @@ export class ShardClient {
                 const clone = Function(clientOptions.ws.buildStrategy.toString()) as unknown as (manager: WebSocketManager) => IShardingStrategy ;
                 clientOptions.ws.buildStrategy = manager => {
                     const strategy = clone(manager);
-                    manager.options.buildIdentifyThrottler = () => {
-                        const manager = new ConcurrencyClient(shardClientUtil);
-                        return Promise.resolve(manager);
-                    };
+                    manager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
                     return strategy;
                 };
             }
