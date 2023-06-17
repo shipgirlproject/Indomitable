@@ -11,9 +11,11 @@ export interface PartialInternalEvents {
 }
 
 export class ShardClient {
+    public readonly manager: Indomitable;
     public readonly client: Client;
     public readonly clusterId: number;
-    public constructor(public manager: Indomitable) {
+    public constructor(manager: Indomitable) {
+        this.manager = manager;
         // pseudo initialize shard client util to make the concurrency client work
         const shardClientUtil = new ShardClientUtil(manager, {} as unknown as Client);
         const concurrencyClient = new ConcurrencyClient(shardClientUtil);
@@ -25,18 +27,16 @@ export class ShardClient {
         if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
             if (!clientOptions.ws.buildStrategy) {
-                clientOptions.ws.buildStrategy = manager => {
-                    const strategy = new SimpleShardingStrategy(manager);
-                    manager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-                    return strategy;
+                clientOptions.ws.buildStrategy = websocketManager => {
+                    websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
+                    return new SimpleShardingStrategy(websocketManager);
                 };
             } else {
                 // eslint-disable-next-line no-new-func
                 const clone = Function(clientOptions.ws.buildStrategy.toString()) as unknown as (manager: WebSocketManager) => IShardingStrategy ;
-                clientOptions.ws.buildStrategy = manager => {
-                    const strategy = clone(manager);
-                    manager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-                    return strategy;
+                clientOptions.ws.buildStrategy = websocketManager => {
+                    websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
+                    return clone(websocketManager);
                 };
             }
         }
