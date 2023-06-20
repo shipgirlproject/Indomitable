@@ -2,12 +2,13 @@ import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js
 import Cluster, { ClusterSettings } from 'node:cluster';
 import { ConcurrencyManager } from './concurrency/ConcurrencyManager';
 import {
-    AbortableData,
     Chunk,
-    ClientEvents,
     FetchSessions,
+    MakeAbortableRequest,
+    AbortableData,
+    ClientEvents,
     InternalEvents,
-    LibraryEvents, makeAbortableRequest,
+    LibraryEvents,
     Message,
     SessionObject,
     Transportable
@@ -276,7 +277,7 @@ export class Indomitable extends EventEmitter {
         if (!cluster) throw new Error('Invalid cluster id provided');
         let abortableData: AbortableData|undefined;
         if (!transportable.signal && (this.ipcTimeout !== Infinity && transportable.repliable)) {
-            abortableData = makeAbortableRequest(this.ipcTimeout);
+            abortableData = MakeAbortableRequest(this.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
         return await cluster.ipc
@@ -294,7 +295,7 @@ export class Indomitable extends EventEmitter {
     public async broadcast(transportable: Transportable): Promise<unknown[]|undefined> {
         let abortableData: AbortableData|undefined;
         if (!transportable.signal && (this.ipcTimeout !== Infinity && transportable.repliable)) {
-            abortableData = makeAbortableRequest(this.ipcTimeout);
+            abortableData = MakeAbortableRequest(this.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
         const results = await Promise

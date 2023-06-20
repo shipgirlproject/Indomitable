@@ -199,7 +199,7 @@ export function Delay(ms: number): Promise<void> {
  * @param delay Time before an abort error throws
  * @returns An abortable data with controller and timeout
  */
-export function makeAbortableRequest(delay: number): AbortableData {
+export function MakeAbortableRequest(delay: number): AbortableData {
     const controller = new AbortController();
     const seconds = Math.round(delay / 1000);
     const timeout = setTimeout(

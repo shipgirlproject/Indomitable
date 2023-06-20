@@ -1,10 +1,10 @@
 import type { Client } from 'discord.js';
 import { Indomitable } from '../Indomitable';
 import {
+    MakeAbortableRequest,
     AbortableData,
     ClientEvents,
     InternalEvents,
-    makeAbortableRequest,
     Message,
     SessionObject,
     Transportable
@@ -128,7 +128,7 @@ export class ShardClientUtil extends EventEmitter {
     public send(transportable: Transportable): Promise<any|void> {
         let abortableData: AbortableData | undefined;
         if (!transportable.signal && (this.ipc.manager.ipcTimeout !== Infinity && transportable.repliable)) {
-            abortableData = makeAbortableRequest(this.ipc.manager.ipcTimeout);
+            abortableData = MakeAbortableRequest(this.ipc.manager.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
         return this.ipc
