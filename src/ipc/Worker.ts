@@ -53,6 +53,7 @@ export class Worker {
             };
             try {
                 (process as unknown as ChildProcess).send(data);
+                this.manager.emit(LibraryEvents.TRACE, { type: 'send', data });
             } catch (error) {
                 return reject(error);
             }
@@ -75,6 +76,7 @@ export class Worker {
 
     private handle(data: Serializable): boolean|void {
         try {
+            this.manager.emit(LibraryEvents.TRACE, { type: 'message', data });
             if (!(data as any).internal)
                 return this.manager.emit(LibraryEvents.MESSAGE, data);
             switch((data as RawIpcMessage).type) {

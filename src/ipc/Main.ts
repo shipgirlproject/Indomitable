@@ -46,6 +46,7 @@ export class Main {
                 type: RawIpcMessageType.MESSAGE
             };
             this.cluster.worker.send(data);
+            this.manager.emit(LibraryEvents.TRACE, { type: 'send', data });
             if (!id) return resolve(undefined);
             let controller: InternalAbortSignal|undefined;
             if (transportable.signal) {
@@ -65,6 +66,7 @@ export class Main {
 
     public async handle(data: Serializable): Promise<boolean|void> {
         try {
+            this.manager.emit(LibraryEvents.TRACE, { type: 'message', data });
             if (!(data as any).internal)
                 return this.manager.emit(LibraryEvents.MESSAGE, data);
             switch((data as RawIpcMessage).type) {
@@ -116,6 +118,7 @@ export class Main {
         // internal error handling
         try {
             const content = message.content as InternalEvents;
+            this.manager.emit(LibraryEvents.DEBUG, `Received internal message op ${content.op}`);
             switch(content.op) {
             case ClientEvents.READY: {
                 const cluster = this.manager.clusters!.get(content.data.clusterId);
