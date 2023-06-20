@@ -30,6 +30,15 @@ export class Main extends BaseIpc{
         });
     }
 
+    public async destroyClusterClient(): Promise<void> {
+        const content: InternalEvents = {
+            op: ClientEvents.DESTROY_CLIENT,
+            data: {},
+            internal: true
+        };
+        await this.send({ content, repliable: true });
+    }
+
     protected async handleMessage(data: RawIpcMessage): Promise<boolean|void> {
         const reply = (content: any) => {
             if (!data.id) return;
@@ -54,12 +63,7 @@ export class Main extends BaseIpc{
             this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: `, content.data);
             switch(content.op) {
             case ClientEvents.READY: {
-                const cluster = this.manager.clusters!.get(content.data.clusterId);
-                if (cluster) {
-                    cluster.ready = true;
-                    cluster.readyAt = Date.now();
-                    if (cluster.tickReady) cluster.tickReady();
-                }
+                this.manager.emit(LibraryEvents.CLIENT_READY, content.data);
                 break;
             }
             case ClientEvents.PING: {

@@ -7,6 +7,7 @@ export enum ClientEvents {
     EVAL = 'eval',
     RESTART = 'restart',
     RESTART_ALL = 'restartAll',
+    DESTROY_CLIENT = 'destroyClient',
     REQUEST_IDENTIFY = 'requestIdentify',
     CANCEL_IDENTIFY = 'cancelIdentify',
     SESSION_INFO = 'sessionInfo',
@@ -35,7 +36,8 @@ export enum LibraryEvents {
     SHARD_READY = 'shardReady',
     SHARD_RECONNECT = 'shardReconnect',
     SHARD_RESUME = 'shardResume',
-    SHARD_DISCONNECT = 'shardDisconnect'
+    SHARD_DISCONNECT = 'shardDisconnect',
+    CLIENT_READY = 'clientReady'
 }
 
 /**

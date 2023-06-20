@@ -2,7 +2,16 @@ import { ChildProcess } from 'node:child_process';
 import { randomUUID } from 'crypto';
 import { BaseIpc } from './BaseIpc.js';
 import { Indomitable } from '../Indomitable';
-import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError, RawIpcMessage, RawIpcMessageType } from '../Util';
+import {
+    ClientEvents,
+    InternalError,
+    InternalEvents,
+    LibraryEvents,
+    Message,
+    RawIpcMessage,
+    RawIpcMessageType,
+    Transportable
+} from '../Util';
 import { ShardClientUtil } from '../client/ShardClientUtil';
 
 export class Worker extends BaseIpc {
@@ -67,9 +76,15 @@ export class Worker extends BaseIpc {
             return this.shard.emit(LibraryEvents.MESSAGE, message);
         try {
             const content = message.content as InternalEvents;
-            if (content.op === ClientEvents.EVAL)
-            // @ts-ignore -- needs to be accessed for broadcastEval
+            switch (content.op) {
+            case ClientEvents.EVAL:
+                // @ts-expect-error
                 message.reply(this.shard.client._eval(content.data));
+                break;
+            case ClientEvents.RESTART:
+                this.shard.client.destroy();
+                message.reply({});
+            }
         } catch (error: any) {
             if (!message.repliable) throw error as Error;
             message.reply({

@@ -87,6 +87,11 @@ export declare interface Indomitable {
      * @eventProperty
      */
     on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+    /**
+     * Emitted when a Discord.js client is ready
+     * @eventProperty
+     */
+    on(event: 'clientReady', listener: (event: ShardEventData) => void): this;
     once(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     once(event: 'message', listener: (message: Message|unknown) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
@@ -97,6 +102,7 @@ export declare interface Indomitable {
     once(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+    once(event: 'clientReady', listener: (event: ShardEventData) => void): this;
     off(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     off(event: 'message', listener: (message: Message|unknown) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;
@@ -107,6 +113,7 @@ export declare interface Indomitable {
     off(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
     off(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     off(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+    off(event: 'clientReady', listener: (event: ShardEventData) => void): this;
 }
 
 /**
@@ -310,10 +317,12 @@ export class Indomitable extends EventEmitter {
         while (this.spawnQueue!.length > 0) {
             try {
                 cluster = this.spawnQueue!.shift()!;
-                if (cluster.started)
+                if (cluster.started) {
+                    await cluster.ipc.destroyClusterClient();
                     await cluster.respawn();
-                else
-                    await cluster.spawn();
+                    continue;
+                }
+                await cluster.spawn();
             } catch (error: unknown) {
                 this.emit(LibraryEvents.ERROR, error as Error);
                 if (cluster! && this.autoRestart) {
