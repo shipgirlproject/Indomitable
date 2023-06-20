@@ -191,7 +191,7 @@ export function Chunk(original: any[], chunks: number): any[] {
  * @returns A promise that resolves in x seconds
  */
 export function Delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(() => resolve(), ms).unref());
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
 }
 
 /**
