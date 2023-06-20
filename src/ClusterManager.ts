@@ -83,9 +83,9 @@ export class ClusterManager {
                 if (!this.manager.autoRestart) return;
                 this.manager.addToSpawnQueue(this);
             });
+        if (!this.started) this.started = true;
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         if (this.manager.waitForReady) await this.wait();
-        if (!this.started) this.started = true;
         this.manager.emit(LibraryEvents.DEBUG, `Successfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)! | Waited for cluster ready? ${this.manager.waitForReady}`);
         this.manager.emit(LibraryEvents.WORKER_READY, this);
         await Delay(this.manager.spawnDelay);

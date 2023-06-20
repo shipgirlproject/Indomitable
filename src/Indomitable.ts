@@ -302,7 +302,10 @@ export class Indomitable extends EventEmitter {
      */
     public addToSpawnQueue(...clusters: ClusterManager[]) {
         if (!Cluster.isPrimary) return Promise.resolve(undefined);
-        this.spawnQueue!.push(...clusters);
+        for (const cluster of clusters) {
+            if (this.spawnQueue!.some(manager => manager.id === cluster.id)) continue;
+            this.spawnQueue!.push(cluster);
+        }
         return this.processQueue();
     }
     /**
@@ -326,8 +329,8 @@ export class Indomitable extends EventEmitter {
             } catch (error: unknown) {
                 this.emit(LibraryEvents.ERROR, error as Error);
                 if (cluster! && this.autoRestart) {
-                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Re-queuing...`);
-                    if (!this.spawnQueue!.includes(cluster)) this.spawnQueue!.push(cluster);
+                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Re-queuing if not in spawn queue`);
+                    this.spawnQueue!.push(cluster);
                 }
             }
         }
