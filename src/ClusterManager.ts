@@ -77,7 +77,7 @@ export class ClusterManager {
             ...process.env
         });
         this.worker
-            .on('message', message => this.ipc.handle(message))
+            .on('message', message => this.ipc.handleRawResponse(message, error => this.manager.emit(LibraryEvents.ERROR, error as Error)))
             .on('error', error => this.manager.emit(LibraryEvents.ERROR, error as Error))
             .once('exit', (code, signal) => {
                 this.cleanup(code, signal);
@@ -96,7 +96,7 @@ export class ClusterManager {
      * Remove all listeners on attached worker process and free from memory
      */
     private cleanup(code: number|null, signal: string|null) {
-        this.ipc.flush(`Cluster exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
+        this.ipc.flushPromises(`Cluster exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.worker?.removeAllListeners();
         this.worker = undefined;
         this.ready = false;

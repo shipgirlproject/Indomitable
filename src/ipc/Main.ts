@@ -1,34 +1,13 @@
-import { Serializable } from 'node:child_process';
 import { randomUUID } from 'crypto';
-import { Indomitable } from '../Indomitable';
+import { BaseIpc } from './BaseIpc.js';
 import { ClusterManager } from '../ClusterManager';
-import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalPromise, InternalError, InternalAbortSignal } from '../Util';
+import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalError } from '../Util';
 
-export class Main {
+export class Main extends BaseIpc{
     public readonly cluster: ClusterManager;
-    private readonly promises: Map<string, InternalPromise>;
     constructor(cluster: ClusterManager) {
+        super(cluster.manager);
         this.cluster = cluster;
-        this.promises = new Map();
-    }
-
-    public get manager(): Indomitable {
-        return this.cluster.manager;
-    }
-
-    public get pending(): number {
-        return this.promises.size;
-    }
-
-    public flush(reason: string): void {
-        const error = new Error(reason);
-        for (const promise of this.promises.values()) {
-            if (promise.controller) {
-                promise.controller.signal.removeEventListener('abort', promise.controller.listener);
-            }
-            promise.reject(error);
-        }
-        this.promises.clear();
     }
 
     public send(transportable: Transportable): Promise<any|undefined> {
@@ -47,55 +26,11 @@ export class Main {
             };
             this.cluster.worker.send(data);
             if (!id) return resolve(undefined);
-            let controller: InternalAbortSignal|undefined;
-            if (transportable.signal) {
-                const listener = () => {
-                    this.promises.delete(id);
-                    reject(new Error('This operation is aborted'));
-                };
-                controller = {
-                    listener,
-                    signal: transportable.signal
-                };
-                controller.signal.addEventListener('abort', listener);
-            }
-            this.promises.set(id, { resolve, reject, controller } as InternalPromise);
+            this.waitForPromise({ id, resolve, reject, signal: transportable.signal });
         });
     }
 
-    public async handle(data: Serializable): Promise<boolean|void> {
-        try {
-            if (!(data as any).internal)
-                return this.manager.emit(LibraryEvents.MESSAGE, data);
-            switch((data as RawIpcMessage).type) {
-            case RawIpcMessageType.MESSAGE:
-                return this.message(data as RawIpcMessage);
-            case RawIpcMessageType.RESPONSE:
-                return this.promise(data as RawIpcMessage);
-            }
-        } catch (error: unknown) {
-            this.manager.emit(LibraryEvents.ERROR, error as Error);
-        }
-    }
-
-    private promise(data: RawIpcMessage): void {
-        const id = data.id as string;
-        const promise = this.promises.get(id);
-        if (!promise) return;
-        this.promises.delete(id);
-        if (promise.controller) {
-            promise.controller.signal.removeEventListener('abort', promise.controller.listener);
-        }
-        if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unknown error reason');
-            error.stack = data.content.stack;
-            error.name = data.content.name;
-            return promise.reject(error);
-        }
-        promise.resolve(data.content);
-    }
-
-    private async message(data: RawIpcMessage): Promise<boolean|void> {
+    protected async handleMessage(data: RawIpcMessage): Promise<boolean|void> {
         const reply = (content: any) => {
             if (!data.id) return;
             const response: RawIpcMessage = {
