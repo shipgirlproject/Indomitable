@@ -25,17 +25,6 @@ export class Worker extends BaseIpc {
             );
     }
 
-    public async ping(): Promise<number> {
-        const content: InternalEvents = {
-            op: ClientEvents.PING,
-            data: {},
-            internal: true
-        };
-        const start = process.hrtime.bigint();
-        const end = await this.send({ content, repliable: true });
-        return Number(BigInt(end) - start);
-    }
-
     public send(transportable: Transportable): Promise<any|undefined> {
         return new Promise((resolve, reject) => {
             const repliable = transportable.repliable || false;

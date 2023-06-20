@@ -1,8 +1,8 @@
 import Cluster, { Worker } from 'node:cluster';
 import { clearTimeout } from 'timers';
-import { Indomitable, ShardEventData } from './Indomitable';
-import { Main } from './ipc/Main';
-import { Delay, LibraryEvents } from './Util';
+import { Indomitable, ShardEventData } from '../Indomitable.js';
+import { Main } from '../ipc/Main.js';
+import { Delay, LibraryEvents } from '../Util.js';
 
 /**
  * Options for child processes

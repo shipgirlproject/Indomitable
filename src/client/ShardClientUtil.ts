@@ -1,8 +1,17 @@
 import type { Client } from 'discord.js';
 import { Indomitable } from '../Indomitable';
-import { ClientEvents, InternalEvents, Message, SessionObject, Transportable } from '../Util';
+import {
+    AbortableData,
+    ClientEvents,
+    InternalEvents,
+    makeAbortableRequest,
+    Message,
+    SessionObject,
+    Transportable
+} from '../Util';
 import { Worker as WorkerIpc } from '../ipc/Worker';
 import EventEmitter from 'node:events';
+import { clearTimeout } from 'timers';
 
 export declare interface ShardClientUtil {
     /**
@@ -37,11 +46,18 @@ export class ShardClientUtil extends EventEmitter {
     }
 
     /**
-     * A shortcut to get the current ipc delay
+     * Gets the current ipc delay
      * @returns A promise that resolves to delay in nanoseconds
      */
-    public ping(): Promise<number> {
-        return this.ipc.ping();
+    public async ping(): Promise<number> {
+        const content: InternalEvents = {
+            op: ClientEvents.PING,
+            data: {},
+            internal: true
+        };
+        const start = process.hrtime.bigint();
+        const end = await this.send({ content, repliable: true });
+        return Number(BigInt(end) - start);
     }
 
     /**
@@ -110,6 +126,16 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A promise that resolves to void or a repliable object
      */
     public send(transportable: Transportable): Promise<any|void> {
-        return this.ipc.send(transportable);
+        let abortableData: AbortableData | undefined;
+        if (!transportable.signal && (this.ipc.manager.ipcTimeout !== Infinity && transportable.repliable)) {
+            abortableData = makeAbortableRequest(this.ipc.manager.ipcTimeout);
+            transportable.signal = abortableData.controller.signal;
+        }
+        return this.ipc
+            .send(transportable)
+            .finally(() => {
+                if (!abortableData) return;
+                clearTimeout(abortableData.timeout);
+            });
     }
 }

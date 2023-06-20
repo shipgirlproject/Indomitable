@@ -49,11 +49,6 @@ export class ShardClient {
         this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
     }
 
-    get ws(): WebSocketManager {
-        // @ts-expect-error: access internal ws class to modify options
-        return this.client.ws._ws;
-    }
-
     public async start(token: string): Promise<void> {
         // attach listeners
         this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));
