@@ -304,7 +304,7 @@ export class Indomitable extends EventEmitter {
                 if (!abortableData) return;
                 clearTimeout(abortableData.timeout);
             });
-        if (!transportable.repliable) return;
+        if (!transportable.repliable) return undefined;
         return results;
     }
 

@@ -25,7 +25,7 @@ export class Worker extends BaseIpc {
             );
     }
 
-    public send(transportable: Transportable): Promise<any|undefined> {
+    public send(transportable: Transportable): Promise<unknown|undefined> {
         return new Promise((resolve, reject) => {
             const repliable = transportable.repliable || false;
             const id = repliable ? randomUUID() : null;

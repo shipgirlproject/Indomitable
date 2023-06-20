@@ -19,7 +19,7 @@ export class Main extends BaseIpc{
         this.cluster = cluster;
     }
 
-    public send(transportable: Transportable): Promise<any|undefined> {
+    public send(transportable: Transportable): Promise<unknown|undefined> {
         return new Promise((resolve, reject) => {
             if (!this.cluster.worker) {
                 this.manager.emit(LibraryEvents.DEBUG, `Tried to send message to cluster ${this.cluster.id} but this worker is yet to be available`);
