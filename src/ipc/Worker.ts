@@ -70,7 +70,7 @@ export class Worker extends BaseIpc {
                 // @ts-expect-error
                 message.reply(this.shard.client._eval(content.data));
                 break;
-            case ClientEvents.RESTART:
+            case ClientEvents.DESTROY_CLIENT:
                 this.shard.client.destroy();
                 message.reply({});
             }

@@ -264,7 +264,6 @@ export class Indomitable extends EventEmitter {
      */
     public async restartAll(): Promise<void>  {
         if (!Cluster.isPrimary) return;
-        this.emit(LibraryEvents.DEBUG, `Restarting ${this.clusters.size} clusters sequentially...`);
         await this.addToSpawnQueue(...this.clusters.values());
     }
 
