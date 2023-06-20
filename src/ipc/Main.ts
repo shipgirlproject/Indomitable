@@ -116,7 +116,7 @@ export class Main {
         // internal error handling
         try {
             const content = message.content as InternalEvents;
-            this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: ${content.data}`);
+            this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: `, content.data);
             switch(content.op) {
             case ClientEvents.READY: {
                 const cluster = this.manager.clusters!.get(content.data.clusterId);
