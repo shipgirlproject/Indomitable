@@ -1,9 +1,10 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
+import Cluster, { ClusterSettings } from 'node:cluster';
+import { ConcurrencyManager } from './concurrency/ConcurrencyManager';
 import { Chunk, FetchSessions, LibraryEvents, Message, SessionObject } from './Util';
 import { ShardClient } from './client/ShardClient';
 import { MainUtil as PrimaryIpc } from './ipc/MainUtil';
 import { ClusterManager } from './ClusterManager';
-import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
 import Os from 'node:os';
 
@@ -15,15 +16,19 @@ export interface IndomitableOptions {
     shardCount?: number|'auto';
     clientOptions?: DiscordJsClientOptions;
     clusterSettings?: ClusterSettings;
-    ipcTimeout?: number;
     spawnTimeout?: number;
     spawnDelay?: number;
     autoRestart?: boolean;
     waitForReady?: boolean;
+    handleConcurrency?: boolean;
     client: typeof Client;
     token: string;
 }
 
+export interface ReconfigureOptions {
+    clusters?: number;
+    shards?: number;
+}
 export interface ShardEventData {
     clusterId: number,
     shardId?: number,
@@ -36,7 +41,7 @@ export declare interface Indomitable {
      * Emitted when data useful for debugging is produced
      * @eventProperty
      */
-    on(event: 'debug', listener: (message: string) => void): this;
+    on(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     /**
      * Emitted when an IPC message is received
      * @eventProperty
@@ -82,7 +87,7 @@ export declare interface Indomitable {
      * @eventProperty
      */
     on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
-    once(event: 'debug', listener: (message: string) => void): this;
+    once(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     once(event: 'message', listener: (message: Message|unknown) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
     once(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
@@ -92,7 +97,7 @@ export declare interface Indomitable {
     once(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
-    off(event: 'debug', listener: (message: string) => void): this;
+    off(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     off(event: 'message', listener: (message: Message|unknown) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;
     off(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
@@ -111,13 +116,14 @@ export class Indomitable extends EventEmitter {
     public clusterCount: number|'auto';
     public shardCount: number|'auto';
     public cachedSession?: SessionObject;
+    public concurrencyManager?: ConcurrencyManager;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly clusterSettings: ClusterSettings;
-    public readonly ipcTimeout: number;
     public readonly spawnTimeout: number;
     public readonly spawnDelay: number;
     public readonly autoRestart: boolean;
     public readonly waitForReady: boolean;
+    public readonly handleConcurrency: boolean;
     public readonly client: typeof Client;
     public readonly clusters?: Map<number, ClusterManager>;
     public readonly ipc?: PrimaryIpc;
@@ -129,11 +135,11 @@ export class Indomitable extends EventEmitter {
      * @param [options.shardCount=auto] The number of shards to create. Expects a number or 'auto'
      * @param [options.clientOptions] Options for the Discord.js client
      * @param [options.clusterSettings] Options for the forked process
-     * @param [options.ipcTimeout] Time to wait before reporting a failed IPC connection
      * @param [options.spawnTimeout] Time to wait before reporting a failed child process spawn
      * @param [options.spawnDelay] Time to wait before spawning another child process
      * @param [options.autoRestart] Whether to automatically restart shards that have been killed unintentionally
      * @param [options.waitForReady] Whether to wait for clusters to be ready before spawning a new one
+     * @param [options.handleConcurrency] Whether you want to handle concurrency properly. Enabling this may result into more stable connection
      * @param [options.client] A Discord.js client class or a modified Discord.js client class
      * @param options.token Discord bot token
      */
@@ -143,19 +149,28 @@ export class Indomitable extends EventEmitter {
         this.shardCount = options.shardCount || 'auto';
         this.clientOptions = options.clientOptions || { intents: [1 << 0] };
         this.clusterSettings = options.clusterSettings || {};
-        this.ipcTimeout = options.ipcTimeout ?? 30000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
         this.spawnDelay = options.spawnDelay ?? 5000;
         this.autoRestart = options.autoRestart ?? false;
         this.waitForReady = options.waitForReady ?? true;
+        this.handleConcurrency = options.handleConcurrency ?? false;
         this.client = options.client;
         this.token = options.token;
         if (!Cluster.isPrimary) return;
         this.clusters = new Map();
         this.ipc = new PrimaryIpc(this);
         this.spawnQueue = [];
-        this.busy = false;
+        this.concurrencyManager = undefined;
         this.cachedSession = undefined;
+        this.busy = false;
+    }
+
+    /**
+     * Checks the internal private flag if Indomitable is busy
+     * @returns Number of clusters in queue
+     */
+    get isBusy(): boolean {
+        return this.busy || false;
     }
 
     /**
@@ -171,8 +186,10 @@ export class Indomitable extends EventEmitter {
      * Gets the current session info of the bot token Indomitable currently handles
      * @returns Session Info
      */
-    public fetchSessions(): Promise<SessionObject> {
-        return FetchSessions(this.token);
+    public async fetchSessions(force = false): Promise<SessionObject> {
+        if (!force && this.cachedSession) return this.cachedSession;
+        this.cachedSession = await FetchSessions(this.token);
+        return this.cachedSession;
     }
 
     /**
@@ -185,11 +202,16 @@ export class Indomitable extends EventEmitter {
             await shardClient.start(this.token);
             return;
         }
+        if (this.handleConcurrency) {
+            const sessions = await this.fetchSessions();
+            this.concurrencyManager = new ConcurrencyManager(sessions.session_start_limit.max_concurrency);
+            this.emit(LibraryEvents.DEBUG, 'Handle concurrency is currently enabled. Indomitable will automatically handle your identifies that can result to more stable connection');
+        }
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
         if (typeof this.shardCount !== 'number') {
-            this.cachedSession = await this.fetchSessions();
-            this.shardCount = this.cachedSession.shards;
+            const sessions = await this.fetchSessions();
+            this.shardCount = sessions.shards;
         }
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;
@@ -228,21 +250,60 @@ export class Indomitable extends EventEmitter {
     }
 
     /**
-     * Adds a cluster to spawn queue
-     * @internal
+     * Reconfigures to launch more shards / clusters without killing the existing processes if possible to avoid big downtimes
+     * @remarks Never execute restart() or restartAll() during this process or else you will double restart that cluster / all clusters
+     * @returns A promise that resolves to void
      */
-    public addToSpawnQueue(...clusters: ClusterManager[]) {
-        if (!Cluster.isPrimary) return;
-        this.spawnQueue!.push(...clusters);
-        return this.processQueue();
+    public async reconfigure(options: ReconfigureOptions = {}): Promise<void> {
+        if (!Cluster.isPrimary || this.isBusy) return;
+        if (!options.shards) {
+            const sessions = await this.fetchSessions();
+            this.shardCount = sessions.shards;
+        }
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.shardCount} shard(s)`);
+        const oldClusterCount = Number(this.clusters!.size);
+        this.clusterCount = options.clusters || this.clusters!.size;
+        const shards = [...Array(this.shardCount).keys()];
+        const chunks = Chunk(shards, Math.round(this.shardCount as number / this.clusterCount));
+        if (oldClusterCount < this.clusterCount) {
+            const count = this.clusterCount - oldClusterCount;
+            for (let id = this.clusterCount - 1; id < count; id++) {
+                const cluster = new ClusterManager({ id, shards: [], manager: this });
+                this.clusters!.set(id, cluster);
+            }
+        }
+        if (oldClusterCount > this.clusterCount) {
+            const keys = [...this.clusters!.keys()].reverse();
+            const range = keys.slice(0, oldClusterCount - this.clusterCount);
+            for (const key of range) {
+                const cluster = this.clusters!.get(key);
+                cluster!.destroy();
+                this.clusters!.delete(key);
+            }
+        }
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.clusterCount} cluster(s) from ${oldClusterCount} cluster(s)`);
+        for (const cluster of this.clusters!.values()) {
+            cluster.shards = chunks.shift()!;
+        }
+        this.emit(LibraryEvents.DEBUG, 'Clusters shard ranges reconfigured, moving to spawn queue');
+        await this.addToSpawnQueue(...this.clusters!.values());
     }
 
     /**
      * Adds a cluster to spawn queue
      * @internal
      */
+    public addToSpawnQueue(...clusters: ClusterManager[]) {
+        if (!Cluster.isPrimary) return Promise.resolve(undefined);
+        this.spawnQueue!.push(...clusters);
+        return this.processQueue();
+    }
+    /**
+     * Adds a cluster to spawn queue
+     * @internal
+     */
     private async processQueue(): Promise<void> {
-        if (this.busy || !this.spawnQueue!.length) return;
+        if (this.isBusy || !this.spawnQueue!.length) return;
         this.busy = true;
         this.emit(LibraryEvents.DEBUG, `Processing spawn queue with ${this.spawnQueue!.length} clusters waiting to be spawned....`);
         let cluster: ClusterManager;

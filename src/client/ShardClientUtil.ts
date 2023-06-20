@@ -18,7 +18,7 @@ export declare interface ShardClientUtil {
  * A class for your interprocess communication needs
  */
 export class ShardClientUtil extends EventEmitter {
-    public readonly client: Client;
+    public client: Client;
     public readonly mode: string;
     public readonly ipc: WorkerIpc;
     public readonly clusterId: number;
@@ -32,7 +32,7 @@ export class ShardClientUtil extends EventEmitter {
         this.ipc = new WorkerIpc(this, manager);
         this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
         this.clusterCount = Number(process.env.INDOMITABLE_CLUSTER_TOTAL);
-        this.shardIds = this.client.options.shards as number[];
+        this.shardIds = process.env.INDOMITABLE_SHARDS!.split(' ').map(Number);
         this.shardCount = Number(process.env.INDOMITABLE_SHARDS_TOTAL);
     }
 

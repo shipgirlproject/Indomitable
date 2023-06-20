@@ -166,6 +166,61 @@ client.shard.on('message', message => {
 })
 ```
 
+> Reconfiguring Indomitable on the go, to launch more clusters or more shard, or more on both
+```js
+// Reconfigure to launch more shards based on Discord Recommendation without spawning more clusters
+indomitable.reconfigure()
+    .then(() => console.log('Done, Indomitable is reconfigured'));
+// Reconfigure to launch more clusters based on your value, but leave the shards based on Discord's recommendation
+indomitable.reconfigure({ clusters: 8 })
+    .then(() => console.log('Done, Indomitable is reconfigured'));
+// Reconfigure to launch more clusters or shards based on your values
+indomitable.reconfigure({ clusters: 8, shards: 8 })
+    .then(() => console.log('Done, Indomitable is reconfigured'));
+// Do not run restart() or restartAll() while this is running. It will cause your cluster / clusters to restart twice.
+if (!indomitable.isBusy) indomitable.restartAll();
+// Do not use reconfigure for just restarting all clusters sequentially, still use .restartAll() for that
+indomitable.restartAll();
+```
+
+> Enabling concurrency handling (across all your shards) (Read Notes Below)
+```js
+const { Indomitable } = require('indomitable');
+const { Client } = require('discord.js');
+const token = 'your_token';
+
+const options = {
+    // Processes to run
+    clusterCount: 2,
+    // Websocket shards to run
+    shardCount: 8,
+    // Discord.JS options
+    clientOptions: {
+        intents: [1 << 0] // Bitwise for GUILD intent only
+    },
+    // Auto restart processes that have been killed
+    // This defaults to false by default unless you specify it
+    autoRestart: true, 
+    // Enable max concurrency handling
+    handleConcurrency: true,
+    // Your Discord.JS client
+    client: Client,
+    // Your bot token
+    token
+}
+
+const manager = new Indomitable(options)
+    .on('error', console.error);
+
+manager.spawn();
+```
+
+* This handling will work in **any shard # and cluster #** regardless
+
+* Pair this with **waitForReady** disabled, and you will get amazingly fast boot times, specially for those who have access to big bot sharding.
+
+* Reduces your identify calls by following global max_concurrency identifies resulting into better connection quality
+
 ### Notes
 
 *    You don't need to call `client.login('token');` yourself, Indomitable will call it for you.

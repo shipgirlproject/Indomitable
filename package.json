@@ -1,6 +1,6 @@
 {
   "name": "indomitable",
-  "version": "2.2.2",
+  "version": "2.3.0",
   "description": "A lightweight (the actual ship is heavy though), performant, powerful & no dependency sharder for Discord.JS",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -43,7 +43,8 @@
   },
   "homepage": "https://github.com/Deivu/Indomitable#readme",
   "peerDependencies": {
-    "discord.js": "*"
+    "discord.js": ">=14.10.x",
+    "@discordjs/ws": ">=0.8.2"
   },
   "devDependencies": {
     "@augu/eslint-config": "^2.2.0",

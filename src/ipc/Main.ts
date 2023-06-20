@@ -1,32 +1,13 @@
-import { Serializable } from 'node:child_process';
 import { randomUUID } from 'crypto';
-import { Indomitable } from '../Indomitable';
+import { BaseIpc } from './BaseIpc.js';
 import { ClusterManager } from '../ClusterManager';
-import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalPromise, InternalError } from '../Util';
+import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalError } from '../Util';
 
-export class Main {
+export class Main extends BaseIpc{
     public readonly cluster: ClusterManager;
-    private readonly promises: Map<string, InternalPromise>;
     constructor(cluster: ClusterManager) {
+        super(cluster.manager);
         this.cluster = cluster;
-        this.promises = new Map();
-    }
-
-    public get manager(): Indomitable {
-        return this.cluster.manager;
-    }
-
-    public get pending(): number {
-        return this.promises.size;
-    }
-
-    public flush(reason: string): void {
-        const error = new Error(reason);
-        for (const promise of this.promises.values()) {
-            clearTimeout(promise.timeout);
-            promise.reject(error);
-        }
-        this.promises.clear();
     }
 
     public send(transportable: Transportable): Promise<any|undefined> {
@@ -45,43 +26,11 @@ export class Main {
             };
             this.cluster.worker.send(data);
             if (!id) return resolve(undefined);
-            const timeout = setTimeout(() => {
-                this.promises.delete(id);
-                reject(new Error('This request timed out'));
-            }, this.manager.ipcTimeout).unref();
-            this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
+            this.waitForPromise({ id, resolve, reject, signal: transportable.signal });
         });
     }
 
-    public async handle(data: Serializable): Promise<boolean|void> {
-        try {
-            if (!(data as any).internal)
-                return this.manager.emit(LibraryEvents.MESSAGE, data);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
-                return await this.message(data as RawIpcMessage);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
-                return this.promise(data as RawIpcMessage);
-        } catch (error: unknown) {
-            this.manager.emit(LibraryEvents.ERROR, error as Error);
-        }
-    }
-
-    private promise(data: RawIpcMessage): void {
-        const id = data.id as string;
-        const promise = this.promises.get(id);
-        if (!promise) return;
-        this.promises.delete(id);
-        clearTimeout(promise.timeout);
-        if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unknown error reason');
-            error.stack = data.content.stack;
-            error.name = data.content.name;
-            return promise.reject(error);
-        }
-        promise.resolve(data.content);
-    }
-
-    private async message(data: RawIpcMessage): Promise<boolean|void> {
+    protected async handleMessage(data: RawIpcMessage): Promise<boolean|void> {
         const reply = (content: any) => {
             if (!data.id) return;
             const response: RawIpcMessage = {
@@ -102,6 +51,7 @@ export class Main {
         // internal error handling
         try {
             const content = message.content as InternalEvents;
+            this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: `, content.data);
             switch(content.op) {
             case ClientEvents.READY: {
                 const cluster = this.manager.clusters!.get(content.data.clusterId);
@@ -132,6 +82,13 @@ export class Main {
                 message.reply(this.manager.cachedSession);
                 break;
             }
+            case ClientEvents.REQUEST_IDENTIFY:
+                await this.manager.concurrencyManager!.waitForIdentify(content.data.shardId);
+                message.reply(null);
+                break;
+            case ClientEvents.CANCEL_IDENTIFY:
+                this.manager.concurrencyManager!.abortIdentify(content.data.shardId);
+                break;
             case ClientEvents.RESTART:
                 await this.manager.restart(content.data.clusterId);
                 break;

@@ -1,31 +1,19 @@
-import { ChildProcess, Serializable } from 'node:child_process';
+import { ChildProcess } from 'node:child_process';
 import { randomUUID } from 'crypto';
+import { BaseIpc } from './BaseIpc.js';
 import { Indomitable } from '../Indomitable';
-import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError, RawIpcMessage, RawIpcMessageType, InternalPromise } from '../Util';
+import { InternalEvents, ClientEvents, LibraryEvents, Message, Transportable, InternalError, RawIpcMessage, RawIpcMessageType } from '../Util';
 import { ShardClientUtil } from '../client/ShardClientUtil';
 
-export class Worker {
+export class Worker extends BaseIpc {
     public readonly shard: ShardClientUtil;
-    public readonly manager: Indomitable;
-    private readonly promises: Map<string, InternalPromise>;
     constructor(shard: ShardClientUtil, manager: Indomitable) {
+        super(manager);
         this.shard = shard;
-        this.manager = manager;
-        this.promises = new Map();
-        (process as unknown as ChildProcess).on('message', data => this.handle(data));
-    }
-
-    public get pending(): number {
-        return this.promises.size;
-    }
-
-    public flush(reason: string): void {
-        const error = new Error(reason);
-        for (const promise of this.promises.values()) {
-            clearTimeout(promise.timeout);
-            promise.reject(error);
-        }
-        this.promises.clear();
+        (process as unknown as ChildProcess)
+            .on('message', data =>
+                this.handleRawResponse(data, error => this.shard.client.emit(LibraryEvents.ERROR, error as Error))
+            );
     }
 
     public async ping(): Promise<number> {
@@ -55,44 +43,11 @@ export class Worker {
                 return reject(error);
             }
             if (!id) return resolve(undefined);
-            const timeout = setTimeout(() => {
-                this.promises.delete(id);
-                reject(new Error('This request timed out'));
-            }, this.manager.ipcTimeout).unref();
-            this.promises.set(id, { resolve, reject, timeout } as InternalPromise);
+            this.waitForPromise({ id, resolve, reject, signal: transportable.signal });
         });
     }
 
-    private handle(data: Serializable): boolean|void {
-        try {
-            if (!(data as any).internal)
-                return this.manager.emit(LibraryEvents.MESSAGE, data);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.MESSAGE)
-                return this.message(data as RawIpcMessage);
-            if ((data as RawIpcMessage).type === RawIpcMessageType.RESPONSE)
-                return this.promise(data as RawIpcMessage);
-        } catch (error: unknown) {
-            // most people handle client.on('error', () => {}) in discord.js since its mandatory, so we'll take advantage of it
-            this.shard.client.emit(LibraryEvents.ERROR, error as Error);
-        }
-    }
-
-    private promise(data: RawIpcMessage): void {
-        const id = data.id as string;
-        const promise = this.promises.get(id);
-        if (!promise) return;
-        this.promises.delete(id);
-        clearTimeout(promise.timeout);
-        if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unknown error reason');
-            error.stack = data.content.stack;
-            error.name = data.content.name;
-            return promise.reject(error);
-        }
-        promise.resolve(data.content);
-    }
-
-    private message(data: RawIpcMessage): boolean|void {
+    protected handleMessage(data: RawIpcMessage): boolean|void {
         const reply = (content: any) => {
             if (!data.id) return;
             const response: RawIpcMessage = {
