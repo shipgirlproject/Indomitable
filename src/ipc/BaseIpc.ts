@@ -1,13 +1,13 @@
-import { InternalAbortSignal, InternalPromise, LibraryEvents, RawIpcMessage, RawIpcMessageType } from '../Util.js';
+import {
+    InternalAbortSignal,
+    InternalPromise,
+    LibraryEvents,
+    RawIpcMessage,
+    RawIpcMessageType,
+    SavePromiseOptions
+} from '../Util.js';
 import { Serializable } from 'node:child_process';
 import { Indomitable } from '../Indomitable.js';
-
-export interface SavePromiseOptions {
-    id: string;
-    resolve: (data: unknown) => void;
-    reject: (reason: unknown) => void;
-    signal?: AbortSignal | undefined;
-}
 
 export abstract class BaseIpc {
     public readonly manager: Indomitable;
@@ -32,6 +32,21 @@ export abstract class BaseIpc {
         this.promises.clear();
     }
 
+    public async handleRawResponse(data: Serializable, errorCallback: (error: unknown) => any): Promise<boolean|void> {
+        try {
+            if (!(data as any).internal)
+                return this.manager.emit(LibraryEvents.MESSAGE, data);
+            switch((data as RawIpcMessage).type) {
+            case RawIpcMessageType.MESSAGE:
+                return await this.handleMessage(data as RawIpcMessage);
+            case RawIpcMessageType.RESPONSE:
+                return this.handlePromise(data as RawIpcMessage);
+            }
+        } catch (error: unknown) {
+            errorCallback(error);
+        }
+    }
+
     protected waitForPromise(options: SavePromiseOptions): void {
         let controller: InternalAbortSignal|undefined;
         if (options.signal) {
@@ -46,21 +61,6 @@ export abstract class BaseIpc {
             controller.signal.addEventListener('abort', listener);
         }
         this.promises.set(options.id, { resolve: options.resolve, reject: options.reject, controller } as InternalPromise);
-    }
-
-    public async handleRawResponse(data: Serializable, errorCallback: (error: unknown) => any): Promise<boolean|void> {
-        try {
-            if (!(data as any).internal)
-                return this.manager.emit(LibraryEvents.MESSAGE, data);
-            switch((data as RawIpcMessage).type) {
-            case RawIpcMessageType.MESSAGE:
-                return await this.handleMessage(data as RawIpcMessage);
-            case RawIpcMessageType.RESPONSE:
-                return this.handlePromise(data as RawIpcMessage);
-            }
-        } catch (error: unknown) {
-            errorCallback(error);
-        }
     }
 
     private handlePromise(data: RawIpcMessage): void {

@@ -1,7 +1,16 @@
 import { randomUUID } from 'crypto';
 import { BaseIpc } from './BaseIpc.js';
-import { ClusterManager } from '../ClusterManager';
-import { Message, LibraryEvents, Transportable, InternalEvents, ClientEvents, RawIpcMessage, RawIpcMessageType, InternalError } from '../Util';
+import { ClusterManager } from '../manager/ClusterManager.js';
+import {
+    ClientEvents,
+    InternalError,
+    InternalEvents,
+    LibraryEvents,
+    Message,
+    RawIpcMessage,
+    RawIpcMessageType,
+    Transportable
+} from '../Util';
 
 export class Main extends BaseIpc{
     public readonly cluster: ClusterManager;
@@ -10,7 +19,7 @@ export class Main extends BaseIpc{
         this.cluster = cluster;
     }
 
-    public send(transportable: Transportable): Promise<any|undefined> {
+    public send(transportable: Transportable): Promise<unknown|undefined> {
         return new Promise((resolve, reject) => {
             if (!this.cluster.worker) {
                 this.manager.emit(LibraryEvents.DEBUG, `Tried to send message to cluster ${this.cluster.id} but this worker is yet to be available`);
@@ -54,12 +63,7 @@ export class Main extends BaseIpc{
             this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: `, content.data);
             switch(content.op) {
             case ClientEvents.READY: {
-                const cluster = this.manager.clusters!.get(content.data.clusterId);
-                if (cluster) {
-                    cluster.ready = true;
-                    cluster.readyAt = Date.now();
-                    if (cluster.tickReady) cluster.tickReady();
-                }
+                this.manager.emit(LibraryEvents.CLIENT_READY, content.data);
                 break;
             }
             case ClientEvents.PING: {
@@ -69,7 +73,7 @@ export class Main extends BaseIpc{
             }
             case ClientEvents.EVAL: {
                 // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
-                const data = await this.manager.ipc!.broadcast({
+                const data = await this.manager.broadcast({
                     content,
                     repliable: true
                 });
@@ -95,9 +99,17 @@ export class Main extends BaseIpc{
             case ClientEvents.RESTART_ALL:
                 await this.manager.restartAll();
                 break;
-            default:
-                // shardReconnect, shardResume etc
-                this.manager.emit(content.op, content.data);
+            case ClientEvents.SHARD_READY:
+                this.manager.emit(LibraryEvents.SHARD_READY, content.data);
+                break;
+            case ClientEvents.SHARD_RECONNECT:
+                this.manager.emit(LibraryEvents.SHARD_RECONNECT, content.data);
+                break;
+            case ClientEvents.SHARD_RESUME:
+                this.manager.emit(LibraryEvents.SHARD_RESUME, content.data);
+                break;
+            case ClientEvents.SHARD_DISCONNECT:
+                this.manager.emit(LibraryEvents.SHARD_DISCONNECT, content.data);
             }
         } catch (error: any) {
             if (!message.repliable) throw error as Error;

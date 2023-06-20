@@ -1,8 +1,17 @@
 import type { Client } from 'discord.js';
 import { Indomitable } from '../Indomitable';
-import { ClientEvents, InternalEvents, Message, SessionObject, Transportable } from '../Util';
+import {
+    MakeAbortableRequest,
+    AbortableData,
+    ClientEvents,
+    InternalEvents,
+    Message,
+    SessionObject,
+    Transportable
+} from '../Util';
 import { Worker as WorkerIpc } from '../ipc/Worker';
 import EventEmitter from 'node:events';
+import { clearTimeout } from 'timers';
 
 export declare interface ShardClientUtil {
     /**
@@ -37,31 +46,38 @@ export class ShardClientUtil extends EventEmitter {
     }
 
     /**
-     * A shortcut to get the current ipc delay
+     * Gets the current ipc delay
      * @returns A promise that resolves to delay in nanoseconds
      */
-    public ping(): Promise<number> {
-        return this.ipc.ping();
+    public async ping(): Promise<number> {
+        const content: InternalEvents = {
+            op: ClientEvents.PING,
+            data: {},
+            internal: true
+        };
+        const start = process.hrtime.bigint();
+        const end = await this.send({ content, repliable: true }) as number;
+        return Number(BigInt(end) - start);
     }
 
     /**
      * Evaluates a script or function on all clusters in the context of the client
      * @returns A promise that resolves to an array of code results
      */
-    public broadcastEval(script: Function, context: any = {}): Promise<any[]> {
+    public broadcastEval(script: Function, context: any = {}): Promise<unknown[]> {
         const content: InternalEvents = {
             op: ClientEvents.EVAL,
             data: `(${script.toString()})(this, ${JSON.stringify(context)})`,
             internal: true
         };
-        return this.ipc.send({ content, repliable: true });
+        return this.send({ content, repliable: true }) as Promise<unknown[]>;
     }
 
     /**
      * Fetches a client property value on all clusters
      * @returns A promise that resolves to an array of code results
      */
-    public fetchClientValues(prop: string): Promise<any[]> {
+    public fetchClientValues(prop: string): Promise<unknown[]> {
         return this.broadcastEval((client: { [key: string]: any; }) => client[prop]);
     }
 
@@ -76,40 +92,50 @@ export class ShardClientUtil extends EventEmitter {
             data: { update },
             internal: true
         };
-        return this.ipc.send({ content, repliable: true });
+        return this.send({ content, repliable: true }) as Promise<SessionObject>;
     }
 
     /**
      * Restarts the given cluster from the clusterId given
      * @returns A promise that resolves to void
      */
-    public restart(clusterId: number): Promise<void> {
+    public restart(clusterId: number): Promise<undefined> {
         const content: InternalEvents = {
             op: ClientEvents.RESTART,
             data: { clusterId },
             internal: true
         };
-        return this.ipc.send({ content });
+        return this.send({ content }) as Promise<undefined>;
     }
 
     /**
      * Restarts all the clusters Indomitable handles sequentially
      * @returns A promise that resolves to void
      */
-    public restartAll(): Promise<void> {
+    public restartAll(): Promise<undefined> {
         const content: InternalEvents = {
             op: ClientEvents.RESTART_ALL,
             data: {},
             internal: true
         };
-        return this.ipc.send({ content });
+        return this.send({ content }) as Promise<undefined>;
     }
 
     /**
      * Shortcut to send a message to the parent process
      * @returns A promise that resolves to void or a repliable object
      */
-    public send(transportable: Transportable): Promise<any|void> {
-        return this.ipc.send(transportable);
+    public async send(transportable: Transportable): Promise<unknown|undefined> {
+        let abortableData: AbortableData | undefined;
+        if (!transportable.signal && (this.ipc.manager.ipcTimeout !== Infinity && transportable.repliable)) {
+            abortableData = MakeAbortableRequest(this.ipc.manager.ipcTimeout);
+            transportable.signal = abortableData.controller.signal;
+        }
+        return await this.ipc
+            .send(transportable)
+            .finally(() => {
+                if (!abortableData) return;
+                clearTimeout(abortableData.timeout);
+            });
     }
 }

@@ -1,7 +1,8 @@
 import Cluster, { Worker } from 'node:cluster';
-import { Indomitable } from './Indomitable';
-import { Main } from './ipc/Main';
-import { Delay, LibraryEvents } from './Util';
+import { clearTimeout } from 'timers';
+import { Indomitable, ShardEventData } from '../Indomitable.js';
+import { Main } from '../ipc/Main.js';
+import { Delay, LibraryEvents } from '../Util.js';
 
 /**
  * Options for child processes
@@ -21,11 +22,9 @@ export class ClusterManager {
     public readonly ipc: Main;
     public shards: number[];
     public started: boolean;
-    public ipcId?: string;
-    public worker?: Worker;
-    public tickReady?: Function;
     public ready: boolean;
     public readyAt: number;
+    public worker?: Worker;
 
     /**
      * @param options.id Cluster ID
@@ -38,10 +37,10 @@ export class ClusterManager {
         this.shards = options.shards;
         this.ipc = new Main(this);
         this.started = false;
-        this.worker = undefined;
-        this.tickReady = undefined;
+        this.started = false;
         this.ready = false;
         this.readyAt = -1;
+        this.worker = undefined;
     }
 
     /**
@@ -84,12 +83,12 @@ export class ClusterManager {
                 if (!this.manager.autoRestart) return;
                 this.manager.addToSpawnQueue(this);
             });
+        if (!this.started) this.started = true;
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         if (this.manager.waitForReady) await this.wait();
         this.manager.emit(LibraryEvents.DEBUG, `Successfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)! | Waited for cluster ready? ${this.manager.waitForReady}`);
         this.manager.emit(LibraryEvents.WORKER_READY, this);
         await Delay(this.manager.spawnDelay);
-        if (!this.started) this.started = true;
     }
 
     /**
@@ -101,7 +100,6 @@ export class ClusterManager {
         this.worker = undefined;
         this.ready = false;
         this.readyAt = -1;
-        if (!this.worker) return;
         this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
     }
@@ -114,15 +112,23 @@ export class ClusterManager {
     private wait(): Promise<void> {
         return new Promise((resolve, reject) => {
             const ms = this.manager.spawnTimeout * this.shards.length;
-            const timeout = setTimeout(() => {
-                this.tickReady = undefined;
-                this.destroy();
-                reject(new Error(`Cluster ${this.id} did not get ready in ${Math.round(ms / 1000)} seconds`));
-            }, ms);
-            this.tickReady = () => {
+            const seconds = Math.round(ms / 1000);
+            this.manager.emit(LibraryEvents.DEBUG, `Waiting for client ready event for ${seconds} second(s)`);
+            let timeout: NodeJS.Timer|undefined;
+            const listener = (data: ShardEventData) => {
+                if (data.clusterId !== this.id) return;
+                this.ready = true;
+                this.readyAt = Date.now();
+                this.manager.off(LibraryEvents.CLIENT_READY, listener);
                 clearTimeout(timeout);
                 resolve();
             };
+            timeout = setTimeout(() => {
+                this.manager.off(LibraryEvents.CLIENT_READY, listener);
+                this.destroy();
+                reject(new Error(`Cluster ${this.id} did not get ready in ${seconds} second(s)`));
+            }, ms).unref();
+            this.manager.on(LibraryEvents.CLIENT_READY, listener);
         });
     }
 }

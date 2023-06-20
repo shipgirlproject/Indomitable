@@ -7,6 +7,7 @@ export enum ClientEvents {
     EVAL = 'eval',
     RESTART = 'restart',
     RESTART_ALL = 'restartAll',
+    DESTROY_CLIENT = 'destroyClient',
     REQUEST_IDENTIFY = 'requestIdentify',
     CANCEL_IDENTIFY = 'cancelIdentify',
     SESSION_INFO = 'sessionInfo',
@@ -23,11 +24,7 @@ export enum ClientEvents {
  */
 export enum LibraryEvents {
     DEBUG = 'debug',
-    CONNECT = 'connect',
-    DISCONNECT = 'disconnect',
-    CLOSE = 'close',
     MESSAGE = 'message',
-    STATUS = 'status',
     ERROR = 'error',
     WORKER_FORK = 'workerFork',
     WORKER_READY = 'workerReady',
@@ -35,7 +32,8 @@ export enum LibraryEvents {
     SHARD_READY = 'shardReady',
     SHARD_RECONNECT = 'shardReconnect',
     SHARD_RESUME = 'shardResume',
-    SHARD_DISCONNECT = 'shardDisconnect'
+    SHARD_DISCONNECT = 'shardDisconnect',
+    CLIENT_READY = 'clientReady'
 }
 
 /**
@@ -43,8 +41,7 @@ export enum LibraryEvents {
  */
 export enum RawIpcMessageType {
     MESSAGE = 'message',
-    RESPONSE = 'response',
-    ABORT = 'abort'
+    RESPONSE = 'response'
 }
 
 /**
@@ -79,6 +76,18 @@ export interface Transportable {
 export interface InternalAbortSignal {
     listener: () => void,
     signal: AbortSignal
+}
+
+export interface SavePromiseOptions {
+    id: string;
+    resolve: (data: unknown) => void;
+    reject: (reason: unknown) => void;
+    signal?: AbortSignal | undefined;
+}
+
+export interface AbortableData {
+    controller: AbortController;
+    timeout: NodeJS.Timeout;
 }
 
 /**
@@ -182,5 +191,20 @@ export function Chunk(original: any[], chunks: number): any[] {
  * @returns A promise that resolves in x seconds
  */
 export function Delay(ms: number): Promise<void> {
-    return new Promise(resolve => setTimeout(() => resolve(), ms).unref());
+    return new Promise(resolve => setTimeout(() => resolve(), ms));
+}
+
+/**
+ * Creates an abortable request with controller and timeout
+ * @param delay Time before an abort error throws
+ * @returns An abortable data with controller and timeout
+ */
+export function MakeAbortableRequest(delay: number): AbortableData {
+    const controller = new AbortController();
+    const seconds = Math.round(delay / 1000);
+    const timeout = setTimeout(
+        () => controller.abort(new Error(`The request has been aborted in ${seconds} second(s)`)),
+        delay
+    );
+    return { controller, timeout };
 }
