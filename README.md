@@ -19,6 +19,8 @@
 
 *    ESM & CommonJS supported
 
+*    Concurrency Support
+
 *    Promisified IPC (Bi-directional)
 
 *    No dependencies (v2 onwards)
