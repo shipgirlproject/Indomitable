@@ -38,11 +38,6 @@ export interface ShardEventData {
 
 export declare interface Indomitable {
     /**
-     * Emitted when the ipc sends / receives any kind of message
-     * @eventProperty
-     */
-    on(event: 'ipc', listener: (data: { type: string, data: unknown }) => void): this;
-    /**
      * Emitted when data useful for debugging is produced
      * @eventProperty
      */
@@ -92,7 +87,6 @@ export declare interface Indomitable {
      * @eventProperty
      */
     on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
-    once(event: 'ipc', listener: (data: { type: string, data: unknown }) => void): this;
     once(event: 'debug', listener: (message: string) => void): this;
     once(event: 'message', listener: (message: Message|unknown) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
@@ -103,7 +97,6 @@ export declare interface Indomitable {
     once(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
-    off(event: 'ipc', listener: (data: { type: string, data: unknown }) => void): this;
     off(event: 'debug', listener: (message: string) => void): this;
     off(event: 'message', listener: (message: Message|unknown) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;

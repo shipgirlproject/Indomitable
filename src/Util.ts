@@ -22,7 +22,6 @@ export enum ClientEvents {
  * Events emitted by Indomitable
  */
 export enum LibraryEvents {
-    TRACE = 'trace',
     DEBUG = 'debug',
     CONNECT = 'connect',
     DISCONNECT = 'disconnect',
