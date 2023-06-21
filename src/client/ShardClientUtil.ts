@@ -1,5 +1,8 @@
 import type { Client } from 'discord.js';
+import EventEmitter from 'node:events';
+import { clearTimeout } from 'timers';
 import { Indomitable } from '../Indomitable';
+import { Worker as WorkerIpc } from '../ipc/Worker';
 import {
     MakeAbortableRequest,
     AbortableData,
@@ -9,9 +12,6 @@ import {
     SessionObject,
     Transportable
 } from '../Util';
-import { Worker as WorkerIpc } from '../ipc/Worker';
-import EventEmitter from 'node:events';
-import { clearTimeout } from 'timers';
 
 export declare interface ShardClientUtil {
     /**
@@ -24,25 +24,32 @@ export declare interface ShardClientUtil {
 }
 
 /**
- * A class for your interprocess communication needs
+ * A class that replaces d.js stock shard client util. The class is built similar to it with minor changes
  */
 export class ShardClientUtil extends EventEmitter {
-    public client: Client;
-    public readonly mode: string;
+    public client?: Client;
     public readonly ipc: WorkerIpc;
     public readonly clusterId: number;
     public readonly clusterCount: number;
     public readonly shardIds: number[];
     public readonly shardCount: number;
-    constructor(manager: Indomitable, client: Client) {
+    constructor(manager: Indomitable) {
         super();
-        this.client = client;
-        this.mode = 'cluster';
         this.ipc = new WorkerIpc(this, manager);
         this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
         this.clusterCount = Number(process.env.INDOMITABLE_CLUSTER_TOTAL);
         this.shardIds = process.env.INDOMITABLE_SHARDS!.split(' ').map(Number);
         this.shardCount = Number(process.env.INDOMITABLE_SHARDS_TOTAL);
+    }
+
+    /**
+     * Builds the pre-initialized shard client util
+     * @internal
+     */
+    public build(client: Client): void {
+        if (this.client) return;
+        this.client = client;
+        this.ipc.build();
     }
 
     /**
@@ -122,7 +129,7 @@ export class ShardClientUtil extends EventEmitter {
     }
 
     /**
-     * Shortcut to send a message to the parent process
+     * Sends a message to primary process
      * @returns A promise that resolves to void or a repliable object
      */
     public async send(transportable: Transportable): Promise<unknown|undefined> {

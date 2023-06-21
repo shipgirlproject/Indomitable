@@ -3,7 +3,6 @@ import { SimpleIdentifyThrottler } from '@discordjs/ws';
 /**
  * A wrapper for @discordjs/ws to work exclusively with Indomitable's dynamic concurrency with support for abort controller
  */
-
 export class ConcurrencyManager {
     private readonly throttler: SimpleIdentifyThrottler;
     private readonly signals: Map<number, AbortController>;
@@ -12,6 +11,9 @@ export class ConcurrencyManager {
         this.signals = new Map();
     }
 
+    /**
+     * Method to try and acquire a lock for identify
+     */
     public async waitForIdentify(shardId: number): Promise<void> {
         try {
             let abort = this.signals.get(shardId);
@@ -25,6 +27,9 @@ export class ConcurrencyManager {
         }
     }
 
+    /**
+     * Aborts an acquire lock request
+     */
     public abortIdentify(shardId: number): void {
         const signal = this.signals.get(shardId);
         signal?.abort();

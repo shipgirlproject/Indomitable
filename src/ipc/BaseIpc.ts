@@ -1,3 +1,5 @@
+import { Serializable } from 'node:child_process';
+import { Indomitable } from '../Indomitable.js';
 import {
     InternalAbortSignal,
     InternalPromise,
@@ -6,9 +8,10 @@ import {
     RawIpcMessageType,
     SavePromiseOptions
 } from '../Util.js';
-import { Serializable } from 'node:child_process';
-import { Indomitable } from '../Indomitable.js';
 
+/**
+ * Base class where primary and worker ipc inherits
+ */
 export abstract class BaseIpc {
     public readonly manager: Indomitable;
     protected readonly promises: Map<string, InternalPromise>;
@@ -17,10 +20,16 @@ export abstract class BaseIpc {
         this.promises = new Map();
     }
 
+    /**
+     * Number of promises pending to be resolved
+     */
     public get pendingPromises(): number {
         return this.promises.size;
     }
 
+    /**
+     * Rejects all the pending promises
+     */
     public flushPromises(reason: string): void {
         const error = new Error(reason);
         for (const promise of this.promises.values()) {
@@ -32,6 +41,10 @@ export abstract class BaseIpc {
         this.promises.clear();
     }
 
+    /**
+     * Taps into message event of worker or primary process to handle ipc communication
+     * @internal
+     */
     public async handleRawResponse(data: Serializable, errorCallback: (error: unknown) => any): Promise<boolean|void> {
         try {
             if (!(data as any).internal)

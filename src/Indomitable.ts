@@ -1,6 +1,11 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
 import Cluster, { ClusterSettings } from 'node:cluster';
+import EventEmitter from 'node:events';
+import Os from 'node:os';
+import { clearTimeout } from 'timers';
 import { ConcurrencyManager } from './concurrency/ConcurrencyManager';
+import { ShardClient } from './client/ShardClient';
+import { ClusterManager } from './manager/ClusterManager.js';
 import {
     Chunk,
     FetchSessions,
@@ -13,11 +18,6 @@ import {
     SessionObject,
     Transportable
 } from './Util';
-import { ShardClient } from './client/ShardClient';
-import { ClusterManager } from './manager/ClusterManager.js';
-import EventEmitter from 'node:events';
-import Os from 'node:os';
-import { clearTimeout } from 'timers';
 
 /**
  * Options to control Indomitable behavior

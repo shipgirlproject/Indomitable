@@ -12,13 +12,20 @@ import {
     Transportable
 } from '../Util';
 
-export class Main extends BaseIpc{
+/**
+ * Primary ipc class. Only initialized at main process
+ */
+export class Main extends BaseIpc {
     public readonly cluster: ClusterManager;
     constructor(cluster: ClusterManager) {
         super(cluster.manager);
         this.cluster = cluster;
     }
 
+    /**
+     * Raw send method without abort controller handling
+     * @param transportable Data to send
+     */
     public send(transportable: Transportable): Promise<unknown|undefined> {
         return new Promise((resolve, reject) => {
             if (!this.cluster.worker) {

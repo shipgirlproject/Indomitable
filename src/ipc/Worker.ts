@@ -1,7 +1,8 @@
-import { ChildProcess } from 'node:child_process';
+import { ChildProcess, Serializable } from 'node:child_process';
 import { randomUUID } from 'crypto';
 import { BaseIpc } from './BaseIpc.js';
 import { Indomitable } from '../Indomitable';
+import { ShardClientUtil } from '../client/ShardClientUtil';
 import {
     ClientEvents,
     InternalError,
@@ -12,19 +13,35 @@ import {
     RawIpcMessageType,
     Transportable
 } from '../Util';
-import { ShardClientUtil } from '../client/ShardClientUtil';
 
+/**
+ * Worker ipc class. Only initialized at worker process
+ */
 export class Worker extends BaseIpc {
     public readonly shard: ShardClientUtil;
+    private built: boolean;
     constructor(shard: ShardClientUtil, manager: Indomitable) {
         super(manager);
         this.shard = shard;
-        (process as unknown as ChildProcess)
-            .on('message', data =>
-                this.handleRawResponse(data, error => this.shard.client.emit(LibraryEvents.ERROR, error as Error))
-            );
+        this.built = false;
     }
 
+    /**
+     * Builds the pre-initialized worker ipc
+     * @internal
+     */
+    public build(): void {
+        if (this.built) return;
+        this.built = true;
+        process.on('message',
+            data => this.handleRawResponse(data as Serializable, error => this.shard.client!.emit(LibraryEvents.ERROR, error as Error))
+        );
+    }
+
+    /**
+     * Raw send method without abort controller handling
+     * @param transportable Data to send
+     */
     public send(transportable: Transportable): Promise<unknown|undefined> {
         return new Promise((resolve, reject) => {
             const repliable = transportable.repliable || false;
@@ -71,7 +88,7 @@ export class Worker extends BaseIpc {
                 message.reply(this.shard.client._eval(content.data));
                 break;
             case ClientEvents.DESTROY_CLIENT:
-                this.shard.client.destroy();
+                this.shard.client!.destroy();
                 message.reply({});
             }
         } catch (error: any) {

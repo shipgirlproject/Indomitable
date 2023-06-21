@@ -73,6 +73,9 @@ export interface Transportable {
     signal?: AbortSignal
 }
 
+/**
+ * Data structure representing an internal abort data
+ */
 export interface InternalAbortSignal {
     listener: () => void,
     signal: AbortSignal
@@ -85,6 +88,9 @@ export interface SavePromiseOptions {
     signal?: AbortSignal | undefined;
 }
 
+/**
+ * Data structure representing a generated abort controller instance
+ */
 export interface AbortableData {
     controller: AbortController;
     timeout: NodeJS.Timeout;

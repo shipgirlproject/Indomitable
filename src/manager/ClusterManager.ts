@@ -27,7 +27,7 @@ export class ClusterManager {
     public worker?: Worker;
 
     /**
-     * @param options.id Cluster ID
+     * @param options.id ClusterId of this Cluster Manager being created
      * @param options.shards An array of numbers representing the shards that this cluster controls
      * @param options.manager Indomitable instance that spawned this cluster
      */

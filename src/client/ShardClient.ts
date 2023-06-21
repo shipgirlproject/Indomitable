@@ -17,7 +17,7 @@ export class ShardClient {
     public constructor(manager: Indomitable) {
         this.manager = manager;
         // pseudo initialize shard client util to make the concurrency client work
-        const shardClientUtil = new ShardClientUtil(manager, {} as unknown as Client);
+        const shardClientUtil = new ShardClientUtil(manager);
         const concurrencyClient = new ConcurrencyClient(shardClientUtil);
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
         clientOptions.shards = shardClientUtil.shardIds;
@@ -41,8 +41,7 @@ export class ShardClient {
             }
         }
         const client = new manager.client(clientOptions);
-        // replace the pseudo initialized client with the real client
-        shardClientUtil.client = client;
+        shardClientUtil.build(client);
         // @ts-ignore -- our own class
         client.shard = shardClientUtil;
         this.client = client;
