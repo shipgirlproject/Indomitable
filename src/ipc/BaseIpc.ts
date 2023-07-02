@@ -47,6 +47,7 @@ export abstract class BaseIpc {
      */
     public async handleRawResponse(data: Serializable, errorCallback: (error: unknown) => any): Promise<boolean|void> {
         try {
+            this.manager.emit(LibraryEvents.RAW, data);
             if (!(data as any).internal)
                 return this.manager.emit(LibraryEvents.MESSAGE, data);
             switch((data as RawIpcMessage).type) {

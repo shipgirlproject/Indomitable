@@ -104,6 +104,11 @@ export declare interface Indomitable {
      * @eventProperty
      */
     on(event: 'clientReady', listener: (event: ShardEventData) => void): this;
+    /**
+     * Emitted on every ipc message the handler receives
+     * @eventProperty
+     */
+    on(event: 'raw', listener: (event: unknown) => void): this;
     once(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     once(event: 'message', listener: (message: Message|unknown) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
@@ -115,6 +120,7 @@ export declare interface Indomitable {
     once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'clientReady', listener: (event: ShardEventData) => void): this;
+    once(event: 'raw', listener: (event: unknown) => void): this;
     off(event: 'debug', listener: (message: string, data?: unknown) => void): this;
     off(event: 'message', listener: (message: Message|unknown) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;
@@ -126,6 +132,7 @@ export declare interface Indomitable {
     off(event: 'shardResume', listener: (event: ShardEventData) => void): this;
     off(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
     off(event: 'clientReady', listener: (event: ShardEventData) => void): this;
+    off(event: 'raw', listener: (event: unknown) => void): this;
 }
 
 /**

@@ -33,7 +33,8 @@ export enum LibraryEvents {
     SHARD_RECONNECT = 'shardReconnect',
     SHARD_RESUME = 'shardResume',
     SHARD_DISCONNECT = 'shardDisconnect',
-    CLIENT_READY = 'clientReady'
+    CLIENT_READY = 'clientReady',
+    RAW = 'raw'
 }
 
 /**
