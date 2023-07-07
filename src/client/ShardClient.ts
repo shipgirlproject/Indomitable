@@ -33,7 +33,7 @@ export class ShardClient {
                 };
             } else {
                 // eslint-disable-next-line no-new-func
-                const clone = Function(clientOptions.ws.buildStrategy.toString()) as unknown as (manager: WebSocketManager) => IShardingStrategy ;
+                const clone = Function(clientOptions.ws.buildStrategy.toString()) as unknown as (manager: WebSocketManager) => IShardingStrategy;
                 clientOptions.ws.buildStrategy = websocketManager => {
                     websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
                     return clone(websocketManager);

@@ -53,7 +53,7 @@ export declare interface Indomitable {
      * Emitted when data useful for debugging is produced
      * @eventProperty
      */
-    on(event: 'debug', listener: (message: string, data?: unknown) => void): this;
+    on(event: 'debug', listener: (message: string) => void): this;
     /**
      * Emitted when an IPC message is received
      * @eventProperty
@@ -109,7 +109,7 @@ export declare interface Indomitable {
      * @eventProperty
      */
     on(event: 'raw', listener: (event: unknown) => void): this;
-    once(event: 'debug', listener: (message: string, data?: unknown) => void): this;
+    once(event: 'debug', listener: (message: string) => void): this;
     once(event: 'message', listener: (message: Message|unknown) => void): this;
     once(event: 'error', listener: (error: unknown) => void): this;
     once(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
@@ -121,7 +121,7 @@ export declare interface Indomitable {
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
     once(event: 'clientReady', listener: (event: ShardEventData) => void): this;
     once(event: 'raw', listener: (event: unknown) => void): this;
-    off(event: 'debug', listener: (message: string, data?: unknown) => void): this;
+    off(event: 'debug', listener: (message: string) => void): this;
     off(event: 'message', listener: (message: Message|unknown) => void): this;
     off(event: 'error', listener: (error: unknown) => void): this;
     off(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;

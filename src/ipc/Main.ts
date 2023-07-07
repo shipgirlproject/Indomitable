@@ -67,7 +67,7 @@ export class Main extends BaseIpc {
         // internal error handling
         try {
             const content = message.content as InternalEvents;
-            this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: `, content.data);
+            this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${content.op} | data: ${JSON.stringify(content.data || {})}`);
             switch(content.op) {
             case ClientEvents.READY: {
                 this.manager.emit(LibraryEvents.CLIENT_READY, content.data);

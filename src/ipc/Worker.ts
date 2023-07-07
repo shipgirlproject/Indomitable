@@ -89,7 +89,7 @@ export class Worker extends BaseIpc {
                 break;
             case ClientEvents.DESTROY_CLIENT:
                 this.shard.client!.destroy();
-                message.reply({});
+                message.reply(null);
             }
         } catch (error: any) {
             if (!message.repliable) throw error as Error;
