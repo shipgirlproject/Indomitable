@@ -32,6 +32,6 @@ export class ConcurrencyManager {
      */
     public abortIdentify(shardId: number): void {
         const signal = this.signals.get(shardId);
-        signal?.abort();
+        signal?.abort(`Shard ${shardId} aborted the identify request`);
     }
 }

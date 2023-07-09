@@ -94,7 +94,9 @@ export class Main extends BaseIpc {
                 break;
             }
             case ClientEvents.REQUEST_IDENTIFY:
-                await this.manager.concurrencyManager!.waitForIdentify(content.data.shardId);
+                await this.manager.concurrencyManager!
+                    .waitForIdentify(content.data.shardId)
+                    .catch(() => this.manager.emit(LibraryEvents.DEBUG, `Shard ${content.data.shardId} identify request was aborted by the ws manager. Re-queuing...`));
                 message.reply(null);
                 break;
             case ClientEvents.CANCEL_IDENTIFY:

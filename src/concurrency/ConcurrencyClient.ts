@@ -19,7 +19,7 @@ export class ConcurrencyClient {
             data: { shardId },
             internal: true
         };
-        const listener = () => this.abortIdentify(shardId).catch(() => null);
+        const listener = () => this.abortIdentify(shardId);
         try {
             signal.addEventListener('abort', listener);
             await this.shard.send({ content, repliable: true });
@@ -31,12 +31,14 @@ export class ConcurrencyClient {
     /**
      * Aborts an acquire lock request
      */
-    private async abortIdentify(shardId: number): Promise<void> {
+    private abortIdentify(shardId: number): void {
         const content: InternalEvents = {
             op: ClientEvents.CANCEL_IDENTIFY,
             data: { shardId },
             internal: true
         };
-        await this.shard.send({ content, repliable: false });
+        this.shard
+            .send({ content, repliable: false })
+            .catch(() => null);
     }
 }
