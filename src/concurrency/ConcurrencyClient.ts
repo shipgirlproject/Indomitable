@@ -23,6 +23,10 @@ export class ConcurrencyClient {
         try {
             signal.addEventListener('abort', listener);
             await this.shard.send({ content, repliable: true });
+        } catch (error: any) {
+            // only throw the error when it's an invoked abort ident from ws package
+            // will be removed once https://github.com/discordjs/discord.js/issues/9688 is resolved
+            if (!error.message.includes('aborted the identify')) throw error;
         } finally {
             signal.removeEventListener('abort', listener);
         }
