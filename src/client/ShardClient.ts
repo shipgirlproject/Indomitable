@@ -33,7 +33,7 @@ export class ShardClient {
         }
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
-        this.client.shard = new ShardClientUtil(client, manager);
+        this.client.shard = new ShardClientUtil(this.client, manager);
         this.clusterId = Number(EnvProcessData.clusterId);
     }
 
