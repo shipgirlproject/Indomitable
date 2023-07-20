@@ -1,5 +1,5 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
-import { WebSocketManager, WorkerShardingStrategy, IShardingStrategy } from '@discordjs/ws';
+import { WorkerShardingStrategy } from '@discordjs/ws';
 import { Indomitable } from '../Indomitable';
 import { ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
