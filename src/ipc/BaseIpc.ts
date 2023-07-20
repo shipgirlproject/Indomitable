@@ -6,8 +6,9 @@ import {
     LibraryEvents,
     RawIpcMessage,
     RawIpcMessageType,
-    SavePromiseOptions
+    SavePromiseOptions, Transportable
 } from '../Util.js';
+import {randomUUID} from "crypto";
 
 /**
  * Base class where primary and worker ipc inherits
@@ -41,6 +42,29 @@ export abstract class BaseIpc {
         this.promises.clear();
     }
 
+    /**
+     * Raw send method without abort controller handling
+     * @param transportable Data to send
+     */
+    public send(transportable: Transportable): Promise<unknown|undefined> {
+        return new Promise((resolve, reject) => {
+            if (!this.available()) {
+                this.manager.emit(LibraryEvents.DEBUG, 'IPC tried to send a message, but the ipc communication is not yet ready');
+                return resolve(undefined);
+            }
+            const repliable = transportable.repliable || false;
+            const id = repliable ? randomUUID() : null;
+            const data: RawIpcMessage = {
+                id,
+                content: transportable.content,
+                internal: true,
+                type: RawIpcMessageType.MESSAGE
+            };
+            this.sendData(data);
+            if (!id) return resolve(undefined);
+            this.waitForPromise({ id, resolve, reject, signal: transportable.signal });
+        });
+    }
     /**
      * Taps into message event of worker or primary process to handle ipc communication
      * @internal
@@ -93,5 +117,7 @@ export abstract class BaseIpc {
         promise.resolve(data.content);
     }
 
+    protected abstract available(): boolean;
+    protected abstract sendData(data: RawIpcMessage): void;
     protected abstract handleMessage(data: RawIpcMessage): Promise<boolean|void>|boolean|void;
 }

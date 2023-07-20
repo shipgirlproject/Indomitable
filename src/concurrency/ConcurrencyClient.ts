@@ -1,13 +1,13 @@
-import { ShardClientUtil } from '../client/ShardClientUtil';
 import { ClientEvents, InternalEvents } from '../Util';
+import { BaseWorker } from '../ipc/BaseWorker';
 
 /**
  * Internal class that is passed to @discordjs/ws to handle concurrency
  */
 export class ConcurrencyClient {
-    private shard: ShardClientUtil;
-    constructor(shard: ShardClientUtil) {
-        this.shard = shard;
+    private ipc: BaseWorker;
+    constructor(ipc: BaseWorker) {
+        this.ipc = ipc;
     }
 
     /**
@@ -22,7 +22,7 @@ export class ConcurrencyClient {
         const listener = () => this.abortIdentify(shardId);
         try {
             signal.addEventListener('abort', listener);
-            await this.shard.send({ content, repliable: true });
+            await this.ipc.send({ content, repliable: true });
         } catch (error: any) {
             // only throw the error when it's an invoked abort ident from ws package
             // will be removed once https://github.com/discordjs/discord.js/issues/9688 is resolved
@@ -41,7 +41,7 @@ export class ConcurrencyClient {
             data: { shardId },
             internal: true
         };
-        this.shard
+        this.ipc
             .send({ content, repliable: false })
             .catch(() => null);
     }

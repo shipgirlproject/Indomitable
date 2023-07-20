@@ -2,8 +2,9 @@ import type { Client } from 'discord.js';
 import EventEmitter from 'node:events';
 import { clearTimeout } from 'timers';
 import { Indomitable } from '../Indomitable';
-import { Worker as WorkerIpc } from '../ipc/Worker';
+import { ClientWorker } from '../ipc/ClientWorker';
 import {
+    EnvProcessData,
     MakeAbortableRequest,
     AbortableData,
     ClientEvents,
@@ -27,29 +28,20 @@ export declare interface ShardClientUtil {
  * A class that replaces d.js stock shard client util. The class is built similar to it with minor changes
  */
 export class ShardClientUtil extends EventEmitter {
-    public client?: Client;
-    public readonly ipc: WorkerIpc;
+    public client: Client;
+    public readonly ipc: ClientWorker;
     public readonly clusterId: number;
     public readonly clusterCount: number;
     public readonly shardIds: number[];
     public readonly shardCount: number;
-    constructor(manager: Indomitable) {
+    constructor(client: Client, manager: Indomitable) {
         super();
-        this.ipc = new WorkerIpc(this, manager);
-        this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
-        this.clusterCount = Number(process.env.INDOMITABLE_CLUSTER_TOTAL);
-        this.shardIds = process.env.INDOMITABLE_SHARDS!.split(' ').map(Number);
-        this.shardCount = Number(process.env.INDOMITABLE_SHARDS_TOTAL);
-    }
-
-    /**
-     * Builds the pre-initialized shard client util
-     * @internal
-     */
-    public build(client: Client): void {
-        if (this.client) return;
         this.client = client;
-        this.ipc.build();
+        this.ipc = new ClientWorker(this, manager);
+        this.clusterId = EnvProcessData.clusterId;
+        this.clusterCount = EnvProcessData.clusterCount;
+        this.shardIds = EnvProcessData.shardIds;
+        this.shardCount = EnvProcessData.shardCount;
     }
 
     /**
@@ -138,11 +130,10 @@ export class ShardClientUtil extends EventEmitter {
             abortableData = MakeAbortableRequest(this.ipc.manager.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
-        return await this.ipc
-            .send(transportable)
-            .finally(() => {
-                if (!abortableData) return;
-                clearTimeout(abortableData.timeout);
-            });
+        try {
+            return await this.ipc.send(transportable);
+        } finally {
+            if (abortableData) clearTimeout(abortableData.timeout);
+        }
     }
 }

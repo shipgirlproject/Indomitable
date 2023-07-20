@@ -1,4 +1,15 @@
 import Https, { RequestOptions } from 'node:https';
+import Cluster from "node:cluster";
+
+/**
+ * Hoisted Environmental Variable for ease of fetching
+ */
+export const EnvProcessData = {
+    clusterId: Number(process.env.INDOMITABLE_CLUSTER || 0),
+    clusterCount: Number(process.env.INDOMITABLE_CLUSTER_TOTAL || 0),
+    shardIds: (process.env.INDOMITABLE_SHARDS || '').split(' ').map(Number),
+    shardCount: Number(process.env.INDOMITABLE_SHARDS_TOTAL || 0)
+};
 
 /**
  * Events for internal use

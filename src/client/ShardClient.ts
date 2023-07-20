@@ -1,9 +1,10 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
 import { WorkerShardingStrategy } from '@discordjs/ws';
 import { Indomitable } from '../Indomitable';
-import { ClientEvents, InternalEvents, LibraryEvents } from '../Util';
+import { EnvProcessData, ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
 import { ShardClientUtil } from './ShardClientUtil';
+import { BaseWorker } from "../ipc/BaseWorker";
 
 export interface PartialInternalEvents {
     op: ClientEvents,
@@ -16,28 +17,24 @@ export class ShardClient {
     public readonly clusterId: number;
     public constructor(manager: Indomitable) {
         this.manager = manager;
-        // pseudo initialize shard client util to make the concurrency client work
-        const shardClientUtil = new ShardClientUtil(manager);
-        const concurrencyClient = new ConcurrencyClient(shardClientUtil);
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
-        clientOptions.shards = shardClientUtil.shardIds;
-        clientOptions.shardCount = shardClientUtil.shardCount;
-        // a very kekw way of injecting custom options, due to backward compatibility,
+        clientOptions.shards = EnvProcessData.shardIds;
+        clientOptions.shardCount = EnvProcessData.shardCount;
+        // a very kek way of injecting custom options, due to backward compatibility,
         // d.js didn't provide a way to access the ws options of @discordjs/ws package
         if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
+            const concurrencyClient = new ConcurrencyClient(new BaseWorker(manager));
             // default to worker sharding strategy if this is enabled, no choice due to lack of option in d.js
             clientOptions.ws.buildStrategy = websocketManager => {
                 websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-                return new WorkerShardingStrategy(websocketManager, { shardsPerWorker: Math.floor(shardClientUtil.shardCount / 2) });
+                return new WorkerShardingStrategy(websocketManager, { shardsPerWorker: Math.floor(clientOptions.shardCount! / 2) });
             };
         }
-        const client = new manager.client(clientOptions);
-        shardClientUtil.build(client);
-        // @ts-ignore -- our own class
-        client.shard = shardClientUtil;
-        this.client = client;
-        this.clusterId = Number(process.env.INDOMITABLE_CLUSTER);
+        this.client = new manager.client(clientOptions);
+        // @ts-expect-error: Override shard client util with indomitable shard client util
+        this.client.shard = new ShardClientUtil(client, manager);
+        this.clusterId = Number(EnvProcessData.clusterId);
     }
 
     public async start(token: string): Promise<void> {

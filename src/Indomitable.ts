@@ -286,12 +286,11 @@ export class Indomitable extends EventEmitter {
             abortableData = MakeAbortableRequest(this.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
-        return await cluster.ipc
-            .send(transportable)
-            .finally(() => {
-                if (!abortableData) return;
-                clearTimeout(abortableData.timeout);
-            });
+        try {
+            return await cluster.ipc.send(transportable);
+        } finally {
+            if (abortableData) clearTimeout(abortableData.timeout);
+        }
     }
 
     /**
@@ -304,14 +303,13 @@ export class Indomitable extends EventEmitter {
             abortableData = MakeAbortableRequest(this.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
-        const results = await Promise
-            .all([...this.clusters.values()].map(cluster => cluster.ipc.send(transportable)))
-            .finally(() => {
-                if (!abortableData) return;
-                clearTimeout(abortableData.timeout);
-            });
-        if (!transportable.repliable) return undefined;
-        return results;
+        try {
+            const results = await Promise.all([...this.clusters.values()].map(cluster => cluster.ipc.send(transportable)));
+            if (!transportable.repliable) return undefined;
+            return results;
+        } finally {
+            if (abortableData) clearTimeout(abortableData.timeout);
+        }
     }
 
     /**

@@ -112,7 +112,7 @@ indomitable.on('message', message => {
         doSomething();
     }
 });
-// Worker Process (your client most likely)
+// ClientWorker Process (your client most likely)
 client.shard.send({ content: { op: 'something' } })
     .catch(console.error);
 ```
@@ -127,7 +127,7 @@ indomitable.on('message', message => {
         message.reply(someValue);
     }
 });
-// Worker Process (your client most likely)
+// ClientWorker Process (your client most likely)
 client.shard.send({ content: { op: 'something' }, repliable: true })
     .then(console.log)
     .catch(console.error);
@@ -151,7 +151,7 @@ indomitable.broadcast({ content: { op: 'meow' }, repliable: true })
     .then(console.log)
     .catch(console.error);
 
-// Worker Process (your client most likely)
+// ClientWorker Process (your client most likely)
 client.shard.on('message', message => {
     if (message.content.op === 'something') {
         if (!message.repliable) return;
