@@ -1,5 +1,5 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
-import { WebSocketManager, SimpleShardingStrategy, IShardingStrategy } from '@discordjs/ws';
+import { WebSocketManager, WorkerShardingStrategy, IShardingStrategy } from '@discordjs/ws';
 import { Indomitable } from '../Indomitable';
 import { ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
@@ -26,19 +26,11 @@ export class ShardClient {
         // d.js didn't provide a way to access the ws options of @discordjs/ws package
         if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
-            if (!clientOptions.ws.buildStrategy) {
-                clientOptions.ws.buildStrategy = websocketManager => {
-                    websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-                    return new SimpleShardingStrategy(websocketManager);
-                };
-            } else {
-                // eslint-disable-next-line no-new-func
-                const clone = Function(clientOptions.ws.buildStrategy.toString()) as unknown as (manager: WebSocketManager) => IShardingStrategy;
-                clientOptions.ws.buildStrategy = websocketManager => {
-                    websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-                    return clone(websocketManager);
-                };
-            }
+            // default to worker sharding strategy if this is enabled, no choice due to lack of option in d.js
+            clientOptions.ws.buildStrategy = websocketManager => {
+                websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
+                return new WorkerShardingStrategy(websocketManager, { shardsPerWorker: Math.floor(shardClientUtil.shardCount / 2) });
+            };
         }
         const client = new manager.client(clientOptions);
         shardClientUtil.build(client);
