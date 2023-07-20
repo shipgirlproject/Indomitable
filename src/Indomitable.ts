@@ -174,7 +174,7 @@ export class Indomitable extends EventEmitter {
         super();
         this.clusterCount = options.clusterCount || 'auto';
         this.shardCount = options.shardCount || 'auto';
-        this.clientOptions = options.clientOptions || { intents: [1 << 0] };
+        this.clientOptions = options.clientOptions || { intents: [ 1 << 0 ] };
         this.clusterSettings = options.clusterSettings || {};
         this.ipcTimeout = options.ipcTimeout ?? 30000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
@@ -242,7 +242,7 @@ export class Indomitable extends EventEmitter {
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;
         this.emit(LibraryEvents.DEBUG, `Starting ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
-        const shards = [...Array(this.shardCount).keys()];
+        const shards = [ ...Array(this.shardCount).keys() ];
         const chunks = Chunk(shards, Math.round(this.shardCount / this.clusterCount));
         Cluster.setupPrimary({ ...{ serialization: 'json' }, ...this.clusterSettings  });
         for (let id = 0; id < this.clusterCount; id++) {
@@ -304,7 +304,7 @@ export class Indomitable extends EventEmitter {
             transportable.signal = abortableData.controller.signal;
         }
         try {
-            const results = await Promise.all([...this.clusters.values()].map(cluster => cluster.ipc.send(transportable)));
+            const results = await Promise.all([ ...this.clusters.values() ].map(cluster => cluster.ipc.send(transportable)));
             if (!transportable.repliable) return undefined;
             return results;
         } finally {
@@ -326,7 +326,7 @@ export class Indomitable extends EventEmitter {
         this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.shardCount} shard(s)`);
         const oldClusterCount = Number(this.clusters.size);
         this.clusterCount = options.clusters || this.clusters.size;
-        const shards = [...Array(this.shardCount).keys()];
+        const shards = [ ...Array(this.shardCount).keys() ];
         const chunks = Chunk(shards, Math.round(this.shardCount as number / this.clusterCount));
         if (oldClusterCount < this.clusterCount) {
             const count = this.clusterCount - oldClusterCount;
@@ -336,7 +336,7 @@ export class Indomitable extends EventEmitter {
             }
         }
         if (oldClusterCount > this.clusterCount) {
-            const keys = [...this.clusters.keys()].reverse();
+            const keys = [ ...this.clusters.keys() ].reverse();
             const range = keys.slice(0, oldClusterCount - this.clusterCount);
             for (const key of range) {
                 const cluster = this.clusters.get(key);

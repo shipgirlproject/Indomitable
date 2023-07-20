@@ -8,7 +8,7 @@ import {
     RawIpcMessageType,
     SavePromiseOptions, Transportable
 } from '../Util.js';
-import {randomUUID} from "crypto";
+import { randomUUID } from 'crypto';
 
 /**
  * Base class where primary and worker ipc inherits
@@ -74,10 +74,10 @@ export abstract class BaseIpc {
             this.manager.emit(LibraryEvents.RAW, data);
             if (!(data as any).internal) return;
             switch((data as RawIpcMessage).type) {
-            case RawIpcMessageType.MESSAGE:
-                return await this.handleMessage(data as RawIpcMessage);
-            case RawIpcMessageType.RESPONSE:
-                return this.handlePromise(data as RawIpcMessage);
+                case RawIpcMessageType.MESSAGE:
+                    return await this.handleMessage(data as RawIpcMessage);
+                case RawIpcMessageType.RESPONSE:
+                    return this.handlePromise(data as RawIpcMessage);
             }
         } catch (error: unknown) {
             errorCallback(error);

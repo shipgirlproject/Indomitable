@@ -1,5 +1,4 @@
 import Https, { RequestOptions } from 'node:https';
-import Cluster from "node:cluster";
 
 /**
  * Hoisted Environmental Variable for ease of fetching

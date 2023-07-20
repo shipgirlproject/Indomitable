@@ -4,7 +4,7 @@ import { Indomitable } from '../Indomitable';
 import { EnvProcessData, ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
 import { ShardClientUtil } from './ShardClientUtil';
-import { BaseWorker } from "../ipc/BaseWorker";
+import { BaseWorker } from '../ipc/BaseWorker';
 
 export interface PartialInternalEvents {
     op: ClientEvents,
