@@ -1,5 +1,4 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
-import { WorkerShardingStrategy } from '@discordjs/ws';
 import { Indomitable } from '../Indomitable';
 import { EnvProcessData, ClientEvents, InternalEvents, LibraryEvents } from '../Util';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
@@ -20,21 +19,19 @@ export class ShardClient {
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
         clientOptions.shards = EnvProcessData.shardIds;
         clientOptions.shardCount = EnvProcessData.shardCount;
-        // a very kek way of injecting custom options, due to backward compatibility,
-        // d.js didn't provide a way to access the ws options of @discordjs/ws package
-        /* if (manager.handleConcurrency) {
-            if (!clientOptions.ws) clientOptions.ws = {};
-            const concurrencyClient = new ConcurrencyClient(new BaseWorker(manager));
-            // default to worker sharding strategy if this is enabled, no choice due to lack of option in d.js
-            clientOptions.ws.buildStrategy = websocketManager => {
-                websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-                return new WorkerShardingStrategy(websocketManager, { shardsPerWorker: Math.floor(clientOptions.shardCount! / 2) });
-            };
-        }*/
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
         this.client.shard = new ShardClientUtil(this.client, manager);
         this.clusterId = Number(EnvProcessData.clusterId);
+        // pseudo code for the meantime until discord.js merges https://github.com/discordjs/discord.js/pull/9728
+        if (manager.handleConcurrency) {
+            const concurrencyClient = new ConcurrencyClient(new BaseWorker(manager));
+            // @ts-expect-error: Private function variable of @discordjs/ws manager
+            if (this.client.ws._ws) {
+                // @ts-expect-error: Override build identify throttler
+                this.client.ws._ws.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
+            }
+        }
     }
 
     public async start(token: string): Promise<void> {
