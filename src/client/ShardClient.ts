@@ -22,7 +22,7 @@ export class ShardClient {
         clientOptions.shardCount = EnvProcessData.shardCount;
         // a very kek way of injecting custom options, due to backward compatibility,
         // d.js didn't provide a way to access the ws options of @discordjs/ws package
-        if (manager.handleConcurrency) {
+        /* if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
             const concurrencyClient = new ConcurrencyClient(new BaseWorker(manager));
             // default to worker sharding strategy if this is enabled, no choice due to lack of option in d.js
@@ -30,7 +30,7 @@ export class ShardClient {
                 websocketManager.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
                 return new WorkerShardingStrategy(websocketManager, { shardsPerWorker: Math.floor(clientOptions.shardCount! / 2) });
             };
-        }
+        }*/
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
         this.client.shard = new ShardClientUtil(this.client, manager);
