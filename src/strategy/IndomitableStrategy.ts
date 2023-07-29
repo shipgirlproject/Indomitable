@@ -72,7 +72,7 @@ export class IndomitableStrategy implements IShardingStrategy {
             throw new Error(`No worker found for shard #${shardId}`);
         const content: MainStrategyData = {
             op: MainStrategyOps.RECONNECT,
-            data: { recovery: WebSocketShardDestroyRecovery.Reconnect },
+            data: { recover: WebSocketShardDestroyRecovery.Reconnect } as WebSocketShardDestroyOptions,
             internal: true
         };
         await worker.ipc.send({ content, repliable: true });

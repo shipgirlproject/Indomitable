@@ -1,6 +1,11 @@
 import EventEmitter from 'node:events';
 import { BaseIpc } from './BaseIpc';
-import { MainStrategyData, MainStrategyOps, Message, RawIpcMessage } from '../Util';
+import {
+    MainStrategyData,
+    MainStrategyOps,
+    Message,
+    RawIpcMessage,
+} from '../Util';
 import { parentPort } from 'worker_threads';
 import { WebSocketShard } from '@discordjs/ws';
 

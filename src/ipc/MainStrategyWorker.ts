@@ -1,14 +1,7 @@
 import EventEmitter from 'node:events';
 import { Worker } from 'node:worker_threads';
 import { BaseIpc } from './BaseIpc';
-import {
-    InternalOps,
-    InternalOpsData,
-    Message,
-    RawIpcMessage,
-    ThreadStrategyData,
-    ThreadStrategyOps
-} from '../Util';
+import { InternalOps, InternalOpsData, Message, RawIpcMessage, ThreadStrategyData, ThreadStrategyOps } from '../Util';
 import { IndomitableStrategy } from '../strategy/IndomitableStrategy';
 
 export class MainStrategyWorker extends BaseIpc {
