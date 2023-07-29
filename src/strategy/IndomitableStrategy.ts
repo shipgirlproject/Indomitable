@@ -5,7 +5,10 @@ import {
     FetchingStrategyOptions,
     IShardingStrategy,
     managerToFetchingStrategyOptions,
-    WebSocketManager, WebSocketShardDestroyOptions, WebSocketShardDestroyRecovery, WebSocketShardStatus
+    WebSocketManager,
+    WebSocketShardDestroyOptions,
+    WebSocketShardDestroyRecovery,
+    WebSocketShardStatus
 } from '@discordjs/ws';
 import { Collection } from 'discord.js';
 import { MainStrategyData, MainStrategyOps } from '../Util';
