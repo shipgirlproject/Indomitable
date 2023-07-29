@@ -7,8 +7,8 @@ import {
     EnvProcessData,
     MakeAbortableRequest,
     AbortableData,
-    ClientEvents,
-    InternalEvents,
+    InternalOps,
+    InternalOpsData,
     Message,
     SessionObject,
     Transportable
@@ -49,8 +49,8 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A promise that resolves to delay in nanoseconds
      */
     public async ping(): Promise<number> {
-        const content: InternalEvents = {
-            op: ClientEvents.PING,
+        const content: InternalOpsData = {
+            op: InternalOps.PING,
             data: {},
             internal: true
         };
@@ -64,8 +64,8 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A promise that resolves to an array of code results
      */
     public broadcastEval(script: Function, context: any = {}): Promise<unknown[]> {
-        const content: InternalEvents = {
-            op: ClientEvents.EVAL,
+        const content: InternalOpsData = {
+            op: InternalOps.EVAL,
             data: `(${script.toString()})(this, ${JSON.stringify(context)})`,
             internal: true
         };
@@ -86,8 +86,8 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A session object
      */
     public fetchSessions(update: boolean = false): Promise<SessionObject> {
-        const content: InternalEvents = {
-            op: ClientEvents.SESSION_INFO,
+        const content: InternalOpsData = {
+            op: InternalOps.SESSION_INFO,
             data: { update },
             internal: true
         };
@@ -99,8 +99,8 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A promise that resolves to void
      */
     public restart(clusterId: number): Promise<undefined> {
-        const content: InternalEvents = {
-            op: ClientEvents.RESTART,
+        const content: InternalOpsData = {
+            op: InternalOps.RESTART,
             data: { clusterId },
             internal: true
         };
@@ -112,8 +112,8 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A promise that resolves to void
      */
     public restartAll(): Promise<undefined> {
-        const content: InternalEvents = {
-            op: ClientEvents.RESTART_ALL,
+        const content: InternalOpsData = {
+            op: InternalOps.RESTART_ALL,
             data: {},
             internal: true
         };

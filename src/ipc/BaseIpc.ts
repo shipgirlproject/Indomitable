@@ -1,14 +1,17 @@
 import { Serializable } from 'node:child_process';
+import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable.js';
 import {
     InternalAbortSignal,
     InternalPromise,
+    IpcErrorData,
     LibraryEvents,
+    Message,
     RawIpcMessage,
     RawIpcMessageType,
-    SavePromiseOptions, Transportable
+    SavePromiseOptions,
+    Transportable
 } from '../Util.js';
-import { randomUUID } from 'crypto';
 
 /**
  * Base class where primary and worker ipc inherits
@@ -65,6 +68,7 @@ export abstract class BaseIpc {
             this.waitForPromise({ id, resolve, reject, signal: transportable.signal });
         });
     }
+
     /**
      * Taps into message event of worker or primary process to handle ipc communication
      * @internal
@@ -75,8 +79,9 @@ export abstract class BaseIpc {
             if (!(data as any).internal) return;
             switch((data as RawIpcMessage).type) {
                 case RawIpcMessageType.MESSAGE:
-                    return await this.handleMessage(data as RawIpcMessage);
+                    return await this.handleUnparsedMessage(data as RawIpcMessage);
                 case RawIpcMessageType.RESPONSE:
+                case RawIpcMessageType.ERROR:
                     return this.handlePromise(data as RawIpcMessage);
             }
         } catch (error: unknown) {
@@ -108,16 +113,58 @@ export abstract class BaseIpc {
         if (promise.controller) {
             promise.controller.signal.removeEventListener('abort', promise.controller.listener);
         }
-        if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unknown error reason');
-            error.stack = data.content.stack;
-            error.name = data.content.name;
-            return promise.reject(error);
+        if (data.type === RawIpcMessageType.ERROR) {
+            const content = data.content as IpcErrorData;
+            const error = new Error(content.reason);
+            error.stack = content.stack;
+            error.name = content.name;
+            promise.reject(error);
+            return;
         }
         promise.resolve(data.content);
     }
 
+    private async handleUnparsedMessage(data: RawIpcMessage): Promise<void> {
+        const reply = (content: any) => {
+            if (!data.id) return;
+            const response: RawIpcMessage = {
+                id: data.id,
+                content,
+                internal: true,
+                type: RawIpcMessageType.RESPONSE
+            };
+            this.sendData(response);
+        };
+        const message: Message = {
+            repliable: !!data.id,
+            content: data.content,
+            reply
+        };
+        if (!data.content.internal)
+            return this.emitMessage(message);
+        try {
+            await this.handleMessage(message);
+        } catch (error: any) {
+            if (!message.repliable) return;
+            const response: RawIpcMessage = {
+                id: data.id,
+                content: {
+                    name: error.name,
+                    reason: error.reason,
+                    stack: error.stack
+                },
+                internal: true,
+                type: RawIpcMessageType.ERROR
+            };
+            this.sendData(response);
+        }
+    }
+
+    protected emitMessage(message: Message): void {
+        this.manager.emit(LibraryEvents.MESSAGE, message);
+    }
+
     protected abstract available(): boolean;
     protected abstract sendData(data: RawIpcMessage): void;
-    protected abstract handleMessage(data: RawIpcMessage): Promise<boolean|void>|boolean|void;
+    protected abstract handleMessage(message: Message): Promise<void>;
 }

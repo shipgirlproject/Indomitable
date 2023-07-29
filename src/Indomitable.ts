@@ -11,8 +11,8 @@ import {
     FetchSessions,
     MakeAbortableRequest,
     AbortableData,
-    ClientEvents,
-    InternalEvents,
+    InternalOps,
+    InternalOpsData,
     LibraryEvents,
     Message,
     SessionObject,
@@ -370,8 +370,8 @@ export class Indomitable extends EventEmitter {
      * @internal
      */
     private async destroyClusterClient(id: number): Promise<void> {
-        const content: InternalEvents = {
-            op: ClientEvents.DESTROY_CLIENT,
+        const content: InternalOpsData = {
+            op: InternalOps.DESTROY_CLIENT,
             data: {},
             internal: true
         };

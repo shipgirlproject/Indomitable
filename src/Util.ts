@@ -1,4 +1,5 @@
 import Https, { RequestOptions } from 'node:https';
+import { WebSocketShardEvents } from '@discordjs/ws';
 
 /**
  * Hoisted Environmental Variable for ease of fetching
@@ -11,9 +12,31 @@ export const EnvProcessData = {
 };
 
 /**
- * Events for internal use
+ * Internal operation codes for the cluster -> thread
  */
-export enum ClientEvents {
+export enum MainStrategyOps {
+    CONNECT = 'connect',
+    DESTROY = 'destroy',
+    SEND = 'send',
+    STATUS = 'status',
+    RECONNECT = 'reconnect'
+}
+
+/**
+ * Internal operation codes for the thread <- cluster
+ */
+export enum ThreadStrategyOps {
+    REQUEST_IDENTIFY = 'requestIdentify',
+    CANCEL_IDENTIFY = 'cancelIdentify',
+    SHARD_EVENT = 'shardEvent',
+    RETRIEVE_SESSION = 'retrieveSession',
+    UPDATE_SESSION = 'updateSession'
+}
+
+/**
+ * Internal operation codes
+ */
+export enum InternalOps {
     EVAL = 'eval',
     RESTART = 'restart',
     RESTART_ALL = 'restartAll',
@@ -21,12 +44,19 @@ export enum ClientEvents {
     REQUEST_IDENTIFY = 'requestIdentify',
     CANCEL_IDENTIFY = 'cancelIdentify',
     SESSION_INFO = 'sessionInfo',
+    PING = 'ping'
+}
+
+/**
+ * Events for internal use
+ */
+export enum ClientEvents {
     READY = 'ready',
-    PING = 'ping',
     SHARD_READY = 'shardReady',
     SHARD_RECONNECT = 'shardReconnect',
     SHARD_RESUME = 'shardResume',
-    SHARD_DISCONNECT = 'shardDisconnect'
+    SHARD_DISCONNECT = 'shardDisconnect',
+    ERROR = 'ERROR'
 }
 
 /**
@@ -52,24 +82,52 @@ export enum LibraryEvents {
  */
 export enum RawIpcMessageType {
     MESSAGE = 'message',
-    RESPONSE = 'response'
+    RESPONSE = 'response',
+    ERROR = 'error'
 }
 
 /**
- * Data structure representing an internal event
+ * Type for raw ipc messages of cluster -> thread
  */
-export interface InternalEvents {
-    op: ClientEvents,
+export interface MainStrategyData {
+    op: MainStrategyOps,
     data: any,
     internal: true
 }
 
 /**
+ * Type for raw ipc messages of cluster <- thread
+ */
+export interface ThreadStrategyData {
+    op: ThreadStrategyOps,
+    event: WebSocketShardEvents,
+    data: any,
+    shardId: number,
+    internal: true
+}
+
+/**
+ * Data structure representing an internal event
+ */
+export interface InternalOpsData {
+    op: InternalOps,
+    data: any,
+    internal: true
+}
+
+/**
+ * Data structure representing an internal discord.js event
+ */
+export interface ClientEventData {
+    op: ClientEvents,
+    data: any,
+    internal: true,
+}
+
+/**
  * Data structure representing an internal error
  */
-export interface InternalError {
-    internal: true;
-    error: true;
+export interface IpcErrorData {
     name: string;
     reason: string;
     stack: string;

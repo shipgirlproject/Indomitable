@@ -1,7 +1,7 @@
 import Cluster, { Worker } from 'node:cluster';
 import { clearTimeout } from 'timers';
 import { Indomitable, ShardEventData } from '../Indomitable.js';
-import { Main } from '../ipc/Main.js';
+import { MainWorker } from '../ipc/MainWorker';
 import { Delay, LibraryEvents } from '../Util.js';
 
 /**
@@ -19,7 +19,7 @@ export interface ClusterManagerOptions {
 export class ClusterManager {
     public readonly manager: Indomitable;
     public readonly id: number;
-    public readonly ipc: Main;
+    public readonly ipc: MainWorker;
     public shards: number[];
     public started: boolean;
     public ready: boolean;
@@ -35,7 +35,7 @@ export class ClusterManager {
         this.manager = options.manager;
         this.id = options.id;
         this.shards = options.shards;
-        this.ipc = new Main(this);
+        this.ipc = new MainWorker(this);
         this.started = false;
         this.started = false;
         this.ready = false;
