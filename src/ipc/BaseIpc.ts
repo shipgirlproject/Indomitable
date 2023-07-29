@@ -3,7 +3,8 @@ import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable.js';
 import {
     InternalAbortSignal,
-    InternalPromise, IpcErrorData,
+    InternalPromise,
+    IpcErrorData,
     LibraryEvents,
     RawIpcMessage,
     RawIpcMessageType,
