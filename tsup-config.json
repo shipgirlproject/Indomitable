@@ -1,8 +1,9 @@
 {
     "dts": true,
-    "entry": ["index.ts"],
+    "entry": ["index.ts", "src/strategy/Thread.ts"],
     "splitting": false,
     "sourcemap": true,
     "clean": true,
-    "format": ["esm", "cjs"]
+    "format": ["esm", "cjs"],
+    "shims": true
 }
