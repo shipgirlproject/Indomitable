@@ -1,7 +1,7 @@
 import { Serializable } from 'node:child_process';
 import { BaseIpc } from './BaseIpc.js';
 import { Indomitable } from '../Indomitable';
-import { RawIpcMessage } from '../Util';
+import { Message, RawIpcMessage } from '../Util';
 
 /**
  * Basic worker ipc class, basic child process ipc handler
@@ -22,5 +22,7 @@ export class BaseWorker extends BaseIpc {
         process.send!(data);
     }
 
-    protected handleMessage(data: RawIpcMessage): boolean|void {}
+    protected handleMessage(message: Message): Promise<void> {
+        return Promise.resolve();
+    }
 }

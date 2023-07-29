@@ -7,8 +7,7 @@ import {
     ClientEventData,
     LibraryEvents,
     Message,
-    RawIpcMessage,
-    RawIpcMessageType
+    RawIpcMessage
 } from '../Util';
 
 const internalOpsValues = Object.values(InternalOps);
@@ -32,96 +31,63 @@ export class MainWorker extends BaseIpc {
         this.cluster.worker?.send(data);
     }
 
-    protected async handleMessage(data: RawIpcMessage): Promise<boolean|void> {
-        const reply = (content: any) => {
-            if (!data.id) return;
-            const response: RawIpcMessage = {
-                id: data.id,
-                content,
-                internal: true,
-                type: RawIpcMessageType.RESPONSE
-            };
-            this.sendData(response);
-        };
-        const message: Message = {
-            repliable: !!data.id,
-            content: data.content,
-            reply
-        };
-        if (!message.content.internal)
-            return this.manager.emit(LibraryEvents.MESSAGE, message);
-        // internal error handling
-        try {
-            this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${message.content.op} | data: ${JSON.stringify(message.content.data || {})}`);
-            if (internalOpsValues.includes(message.content.op)) {
-                const content = message.content as InternalOpsData;
-                switch(content.op) {
-                    case InternalOps.PING: {
-                        const end = process.hrtime.bigint().toString();
-                        message.reply(end);
-                        break;
-                    }
-                    case InternalOps.EVAL: {
-                        // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
-                        const data = await this.manager.broadcast({
-                            content,
-                            repliable: true
-                        });
-                        message.reply(data);
-                        break;
-                    }
-                    case InternalOps.SESSION_INFO: {
-                        if (content.data.update || !this.manager.cachedSession)
-                            this.manager.cachedSession = await this.manager.fetchSessions();
-                        message.reply(this.manager.cachedSession);
-                        break;
-                    }
-                    case InternalOps.REQUEST_IDENTIFY:
-                        await this.manager.concurrencyManager!.waitForIdentify(content.data.shardId);
-                        message.reply(null);
-                        break;
-                    case InternalOps.CANCEL_IDENTIFY:
-                        this.manager.concurrencyManager!.abortIdentify(content.data.shardId);
-                        break;
-                    case InternalOps.RESTART:
-                        await this.manager.restart(content.data.clusterId);
-                        break;
-                    case InternalOps.RESTART_ALL:
-                        await this.manager.restartAll();
-                        break;
+    protected async handleMessage(message: Message): Promise<void> {
+        this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${message.content.op} | data: ${JSON.stringify(message.content.data || {})}`);
+        if (internalOpsValues.includes(message.content.op)) {
+            const content = message.content as InternalOpsData;
+            switch(content.op) {
+                case InternalOps.PING: {
+                    const end = process.hrtime.bigint().toString();
+                    message.reply(end);
+                    break;
                 }
-            } else if (clientEventsValues.includes(message.content.op)) {
-                const content = message.content as ClientEventData;
-                switch(content.op) {
-                    case ClientEvents.READY:
-                        this.manager.emit(LibraryEvents.CLIENT_READY, content.data);
-                        break;
-                    case ClientEvents.SHARD_READY:
-                        this.manager.emit(LibraryEvents.SHARD_READY, content.data);
-                        break;
-                    case ClientEvents.SHARD_RECONNECT:
-                        this.manager.emit(LibraryEvents.SHARD_RECONNECT, content.data);
-                        break;
-                    case ClientEvents.SHARD_RESUME:
-                        this.manager.emit(LibraryEvents.SHARD_RESUME, content.data);
-                        break;
-                    case ClientEvents.SHARD_DISCONNECT:
-                        this.manager.emit(LibraryEvents.SHARD_DISCONNECT, content.data);
+                case InternalOps.EVAL: {
+                    // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
+                    const data = await this.manager.broadcast({
+                        content,
+                        repliable: true
+                    });
+                    message.reply(data);
+                    break;
                 }
+                case InternalOps.SESSION_INFO: {
+                    if (content.data.update || !this.manager.cachedSession)
+                        this.manager.cachedSession = await this.manager.fetchSessions();
+                    message.reply(this.manager.cachedSession);
+                    break;
+                }
+                case InternalOps.REQUEST_IDENTIFY:
+                    await this.manager.concurrencyManager!.waitForIdentify(content.data.shardId);
+                    message.reply(null);
+                    break;
+                case InternalOps.CANCEL_IDENTIFY:
+                    this.manager.concurrencyManager!.abortIdentify(content.data.shardId);
+                    break;
+                case InternalOps.RESTART:
+                    await this.manager.restart(content.data.clusterId);
+                    break;
+                case InternalOps.RESTART_ALL:
+                    await this.manager.restartAll();
+                    break;
             }
-        } catch (error: any) {
-            if (!message.repliable) throw error as Error;
-            const response: RawIpcMessage = {
-                id: data.id,
-                content: {
-                    name: error.name,
-                    reason: error.reason,
-                    stack: error.stack
-                },
-                internal: true,
-                type: RawIpcMessageType.ERROR
-            };
-            this.sendData(response);
+        } else if (clientEventsValues.includes(message.content.op)) {
+            const content = message.content as ClientEventData;
+            switch(content.op) {
+                case ClientEvents.READY:
+                    this.manager.emit(LibraryEvents.CLIENT_READY, content.data);
+                    break;
+                case ClientEvents.SHARD_READY:
+                    this.manager.emit(LibraryEvents.SHARD_READY, content.data);
+                    break;
+                case ClientEvents.SHARD_RECONNECT:
+                    this.manager.emit(LibraryEvents.SHARD_RECONNECT, content.data);
+                    break;
+                case ClientEvents.SHARD_RESUME:
+                    this.manager.emit(LibraryEvents.SHARD_RESUME, content.data);
+                    break;
+                case ClientEvents.SHARD_DISCONNECT:
+                    this.manager.emit(LibraryEvents.SHARD_DISCONNECT, content.data);
+            }
         }
     }
 }

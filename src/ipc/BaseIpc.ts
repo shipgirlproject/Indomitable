@@ -6,6 +6,7 @@ import {
     InternalPromise,
     IpcErrorData,
     LibraryEvents,
+    Message,
     RawIpcMessage,
     RawIpcMessageType,
     SavePromiseOptions,
@@ -78,7 +79,7 @@ export abstract class BaseIpc {
             if (!(data as any).internal) return;
             switch((data as RawIpcMessage).type) {
                 case RawIpcMessageType.MESSAGE:
-                    return await this.handleMessage(data as RawIpcMessage);
+                    return await this.handleUnparsedMessage(data as RawIpcMessage);
                 case RawIpcMessageType.RESPONSE:
                 case RawIpcMessageType.ERROR:
                     return this.handlePromise(data as RawIpcMessage);
@@ -123,7 +124,47 @@ export abstract class BaseIpc {
         promise.resolve(data.content);
     }
 
+    private async handleUnparsedMessage(data: RawIpcMessage): Promise<void> {
+        const reply = (content: any) => {
+            if (!data.id) return;
+            const response: RawIpcMessage = {
+                id: data.id,
+                content,
+                internal: true,
+                type: RawIpcMessageType.RESPONSE
+            };
+            this.sendData(response);
+        };
+        const message: Message = {
+            repliable: !!data.id,
+            content: data.content,
+            reply
+        };
+        if (!data.content.internal)
+            return this.emitMessage(message);
+        try {
+            await this.handleMessage(message);
+        } catch (error: any) {
+            if (!message.repliable) return;
+            const response: RawIpcMessage = {
+                id: data.id,
+                content: {
+                    name: error.name,
+                    reason: error.reason,
+                    stack: error.stack
+                },
+                internal: true,
+                type: RawIpcMessageType.ERROR
+            };
+            this.sendData(response);
+        }
+    }
+
+    protected emitMessage(message: Message): void {
+        this.manager.emit(LibraryEvents.MESSAGE, message);
+    }
+
     protected abstract available(): boolean;
     protected abstract sendData(data: RawIpcMessage): void;
-    protected abstract handleMessage(data: RawIpcMessage): Promise<boolean|void>|boolean|void;
+    protected abstract handleMessage(message: Message): Promise<void>;
 }
