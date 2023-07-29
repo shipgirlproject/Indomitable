@@ -1,14 +1,15 @@
 import { Serializable } from 'node:child_process';
+import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable.js';
 import {
     InternalAbortSignal,
-    InternalPromise,
+    InternalPromise, IpcErrorData,
     LibraryEvents,
     RawIpcMessage,
     RawIpcMessageType,
-    SavePromiseOptions, Transportable
+    SavePromiseOptions,
+    Transportable
 } from '../Util.js';
-import { randomUUID } from 'crypto';
 
 /**
  * Base class where primary and worker ipc inherits
@@ -65,6 +66,7 @@ export abstract class BaseIpc {
             this.waitForPromise({ id, resolve, reject, signal: transportable.signal });
         });
     }
+
     /**
      * Taps into message event of worker or primary process to handle ipc communication
      * @internal
@@ -77,6 +79,7 @@ export abstract class BaseIpc {
                 case RawIpcMessageType.MESSAGE:
                     return await this.handleMessage(data as RawIpcMessage);
                 case RawIpcMessageType.RESPONSE:
+                case RawIpcMessageType.ERROR:
                     return this.handlePromise(data as RawIpcMessage);
             }
         } catch (error: unknown) {
@@ -108,11 +111,13 @@ export abstract class BaseIpc {
         if (promise.controller) {
             promise.controller.signal.removeEventListener('abort', promise.controller.listener);
         }
-        if (data.content?.internal && data.content?.error) {
-            const error = new Error(data.content.reason || 'Unknown error reason');
-            error.stack = data.content.stack;
-            error.name = data.content.name;
-            return promise.reject(error);
+        if (data.type === RawIpcMessageType.ERROR) {
+            const content = data.content as IpcErrorData;
+            const error = new Error(content.reason);
+            error.stack = content.stack;
+            error.name = content.name;
+            promise.reject(error);
+            return;
         }
         promise.resolve(data.content);
     }

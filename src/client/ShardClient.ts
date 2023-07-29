@@ -1,7 +1,7 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
 import { Indomitable } from '../Indomitable';
-import { EnvProcessData, ClientEvents, InternalEvents, LibraryEvents } from '../Util';
-import { ConcurrencyClient } from '../concurrency/ConcurrencyClient.js';
+import { EnvProcessData, ClientEvents, ClientEventData } from '../Util';
+import { IndomitableStrategy } from '../strategy/IndomitableStrategy';
 import { ShardClientUtil } from './ShardClientUtil';
 import { BaseWorker } from '../ipc/BaseWorker';
 
@@ -19,19 +19,14 @@ export class ShardClient {
         const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
         clientOptions.shards = EnvProcessData.shardIds;
         clientOptions.shardCount = EnvProcessData.shardCount;
+        if (manager.handleConcurrency) {
+            if (!clientOptions.ws) clientOptions.ws = {};
+            clientOptions.ws.buildStrategy = ws => new IndomitableStrategy(ws, new BaseWorker(manager));
+        }
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
         this.client.shard = new ShardClientUtil(this.client, manager);
         this.clusterId = Number(EnvProcessData.clusterId);
-        // pseudo code for the meantime until discord.js merges https://github.com/discordjs/discord.js/pull/9728
-        if (manager.handleConcurrency) {
-            const concurrencyClient = new ConcurrencyClient(new BaseWorker(manager));
-            // @ts-expect-error: Private function variable of @discordjs/ws manager
-            if (this.client.ws._ws) {
-                // @ts-expect-error: Override build identify throttler
-                this.client.ws._ws.options.buildIdentifyThrottler = () => Promise.resolve(concurrencyClient);
-            }
-        }
     }
 
     public async start(token: string): Promise<void> {
@@ -48,9 +43,9 @@ export class ShardClient {
     private send(partial: PartialInternalEvents): void {
         // @ts-ignore -- our own class
         const shardClientUtil = this.client.shard as ShardClientUtil;
-        const content: InternalEvents = { ...partial, internal: true };
+        const content: ClientEventData = { ...partial, internal: true };
         shardClientUtil
             .send({ content, repliable: false })
-            .catch((error: unknown) => this.client.emit(LibraryEvents.ERROR, error as Error));
+            .catch((error: unknown) => this.client.emit(ClientEvents.ERROR, error as Error));
     }
 }

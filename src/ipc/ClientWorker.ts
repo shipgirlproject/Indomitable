@@ -2,14 +2,15 @@ import { Indomitable } from '../Indomitable';
 import { ShardClientUtil } from '../client/ShardClientUtil';
 import { BaseWorker } from './BaseWorker';
 import {
-    ClientEvents,
-    InternalError,
-    InternalEvents,
+    InternalOps,
+    InternalOpsData,
     LibraryEvents,
     Message,
     RawIpcMessage,
     RawIpcMessageType
 } from '../Util';
+
+const internalOpsValues = Object.values(InternalOps);
 
 /**
  * Extended worker ipc class, shard client util ipc class
@@ -40,25 +41,30 @@ export class ClientWorker extends BaseWorker {
         if (!message.content.internal)
             return this.shard.emit(LibraryEvents.MESSAGE, message);
         try {
-            const content = message.content as InternalEvents;
+            if (!internalOpsValues.includes(message.content.op)) return;
+            const content = message.content as InternalOpsData;
             switch (content.op) {
-                case ClientEvents.EVAL:
-                // @ts-expect-error
+                case InternalOps.EVAL:
+                    // @ts-expect-error
                     message.reply(this.shard.client._eval(content.data));
                     break;
-                case ClientEvents.DESTROY_CLIENT:
-                this.shard.client!.destroy();
+                case InternalOps.DESTROY_CLIENT:
+                    this.shard.client!.destroy();
                     message.reply(null);
             }
         } catch (error: any) {
             if (!message.repliable) throw error as Error;
-            message.reply({
+            const response: RawIpcMessage = {
+                id: data.id,
+                content: {
+                    name: error.name,
+                    reason: error.reason,
+                    stack: error.stack
+                },
                 internal: true,
-                error: true,
-                name: error.name,
-                reason: error.reason,
-                stack: error.stack
-            } as InternalError);
+                type: RawIpcMessageType.ERROR
+            };
+            this.sendData(response);
         }
     }
 }
