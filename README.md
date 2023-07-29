@@ -19,13 +19,13 @@
 
 *    ESM & CommonJS supported
 
-*    Concurrency Support
+*    Shard Concurrency Support
 
-*    Promisified IPC (Bi-directional)
+*    Easy to use promised based IPC
 
-*    No dependencies (v2 onwards)
+*    No dependencies
 
-*    Very cute (and lazy like the Kaiju Princess! *If you know, you know*)
+*    Very cute (and lazy)
 
 ## Used in prod by the ff:
 
