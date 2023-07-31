@@ -1,4 +1,6 @@
 import EventEmitter from 'node:events';
+import { parentPort } from 'worker_threads';
+import { WebSocketShard } from '@discordjs/ws';
 import { BaseIpc } from './BaseIpc';
 import {
     MainStrategyData,
@@ -6,8 +8,6 @@ import {
     Message,
     RawIpcMessage,
 } from '../Util';
-import { parentPort } from 'worker_threads';
-import { WebSocketShard } from '@discordjs/ws';
 
 export class ThreadStrategyWorker extends BaseIpc {
     private shard: WebSocketShard|undefined;

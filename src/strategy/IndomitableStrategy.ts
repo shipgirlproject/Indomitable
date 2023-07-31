@@ -1,6 +1,6 @@
 import { join } from 'node:path';
 import { once } from 'node:events';
-import { Worker } from 'node:worker_threads';
+import { Worker, WorkerOptions, ResourceLimits } from 'node:worker_threads';
 import {
     FetchingStrategyOptions,
     IShardingStrategy,
@@ -24,14 +24,21 @@ export interface IndomitableWorker {
     ipc: MainStrategyWorker;
 }
 
+export interface IndomitableStrategyOptions {
+    path?: string;
+    resourceLimits?: ResourceLimits;
+}
+
 export class IndomitableStrategy implements IShardingStrategy {
     public readonly manager: WebSocketManager;
     public readonly ipc: BaseWorker;
     public readonly workers: Collection<number, IndomitableWorker>;
-    constructor(manager: WebSocketManager, ipc: BaseWorker) {
+    private readonly options: IndomitableStrategyOptions;
+    constructor(manager: WebSocketManager, ipc: BaseWorker, options: IndomitableStrategyOptions = {}) {
         this.manager = manager;
         this.ipc = ipc;
         this.workers = new Collection<number, IndomitableWorker>();
+        this.options = options;
     }
 
     public async spawn(shardIds: number[]): Promise<void> {
@@ -106,7 +113,11 @@ export class IndomitableStrategy implements IShardingStrategy {
     }
 
     private async createWorker(shardId: number, workerData: WorkerData): Promise<Worker> {
-        const thread = new Worker(join(__dirname, 'src/strategy/', 'Thread.js'), { workerData });
+        const path = this.options.path || join(__dirname, 'src/strategy/', 'Thread.js');
+        const options: WorkerOptions = { workerData };
+        if (this.options.resourceLimits)
+            options.resourceLimits = this.options.resourceLimits;
+        const thread = new Worker(path, options);
         await once(thread, 'online');
         const ipc = new MainStrategyWorker(shardId, thread, this);
         thread
