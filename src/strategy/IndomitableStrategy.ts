@@ -106,7 +106,13 @@ export class IndomitableStrategy implements IShardingStrategy {
     }
 
     private async createWorker(shardId: number, workerData: WorkerData): Promise<Worker> {
-        const thread = new Worker(join(__dirname, 'src/strategy/', 'Thread.js'), { workerData });
+        const thread = new Worker(
+            join(__dirname, 'src/strategy/', 'Thread.js'),
+            {
+                resourceLimits: { maxOldGenerationSizeMb: 64, maxYoungGenerationSizeMb: 32 },
+                workerData
+            }
+        );
         await once(thread, 'online');
         const ipc = new MainStrategyWorker(shardId, thread, this);
         thread
