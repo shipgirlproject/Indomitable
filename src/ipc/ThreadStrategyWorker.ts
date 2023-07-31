@@ -12,7 +12,6 @@ import {
 export class ThreadStrategyWorker extends BaseIpc {
     private shard: WebSocketShard|undefined;
     constructor() {
-        // @ts-expect-error: Indomitable will not be used in the thread process
         super(new EventEmitter());
         parentPort!.on('message', message => this.handleRawResponse(message, () => null));
     }

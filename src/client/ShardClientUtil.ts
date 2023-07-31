@@ -125,9 +125,10 @@ export class ShardClientUtil extends EventEmitter {
      * @returns A promise that resolves to void or a repliable object
      */
     public async send(transportable: Transportable): Promise<unknown|undefined> {
+        const manager = this.ipc.manager as Indomitable;
         let abortableData: AbortableData | undefined;
-        if (!transportable.signal && (this.ipc.manager.ipcTimeout !== Infinity && transportable.repliable)) {
-            abortableData = MakeAbortableRequest(this.ipc.manager.ipcTimeout);
+        if (!transportable.signal && (manager.ipcTimeout !== Infinity && transportable.repliable)) {
+            abortableData = MakeAbortableRequest(manager.ipcTimeout);
             transportable.signal = abortableData.controller.signal;
         }
         try {

@@ -9,7 +9,6 @@ export class MainStrategyWorker extends BaseIpc {
     public readonly thread: Worker;
     public readonly strategy: IndomitableStrategy;
     constructor(id: number, thread: Worker, strategy: IndomitableStrategy) {
-        // @ts-expect-error: Indomitable will not be used in this class
         super(new EventEmitter());
         this.id = id;
         this.thread = thread;

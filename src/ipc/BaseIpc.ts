@@ -1,3 +1,4 @@
+import EventEmitter from 'node:events';
 import { Serializable } from 'node:child_process';
 import { randomUUID } from 'crypto';
 import { Indomitable } from '../Indomitable.js';
@@ -17,9 +18,9 @@ import {
  * Base class where primary and worker ipc inherits
  */
 export abstract class BaseIpc {
-    public readonly manager: Indomitable;
+    public readonly manager: Indomitable|EventEmitter;
     protected readonly promises: Map<string, InternalPromise>;
-    protected constructor(manager: Indomitable) {
+    protected constructor(manager: Indomitable|EventEmitter) {
         this.manager = manager;
         this.promises = new Map();
     }

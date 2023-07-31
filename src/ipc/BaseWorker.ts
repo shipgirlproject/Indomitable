@@ -1,17 +1,17 @@
+import EventEmitter from 'node:events';
 import { Serializable } from 'node:child_process';
-import { BaseIpc } from './BaseIpc.js';
 import { Indomitable } from '../Indomitable';
+import { BaseIpc } from './BaseIpc.js';
 import { Message, RawIpcMessage } from '../Util';
 
 /**
  * Basic worker ipc class, basic child process ipc handler
  */
 export class BaseWorker extends BaseIpc {
-    constructor(manager: Indomitable) {
+    constructor(manager: Indomitable | EventEmitter = new EventEmitter()) {
         super(manager);
-        process.on('message',
-            data => this.handleRawResponse(data as Serializable, () => null)
-        );
+        process
+            .on('message', data => this.handleRawResponse(data as Serializable, () => null));
     }
 
     protected available(): boolean {

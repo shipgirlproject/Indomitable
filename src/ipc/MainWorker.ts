@@ -1,5 +1,6 @@
 import { BaseIpc } from './BaseIpc.js';
 import { ClusterManager } from '../manager/ClusterManager.js';
+import { Indomitable } from '../Indomitable';
 import {
     InternalOps,
     InternalOpsData,
@@ -33,6 +34,7 @@ export class MainWorker extends BaseIpc {
 
     protected async handleMessage(message: Message): Promise<void> {
         this.manager.emit(LibraryEvents.DEBUG, `Received internal message. op: ${message.content.op} | data: ${JSON.stringify(message.content.data || {})}`);
+        const manager = this.manager as Indomitable;
         if (internalOpsValues.includes(message.content.op)) {
             const content = message.content as InternalOpsData;
             switch(content.op) {
@@ -43,7 +45,7 @@ export class MainWorker extends BaseIpc {
                 }
                 case InternalOps.EVAL: {
                     // don't touch eval data, just forward it to clusters since this is already an instance of InternalEvent
-                    const data = await this.manager.broadcast({
+                    const data = await manager.broadcast({
                         content,
                         repliable: true
                     });
@@ -51,23 +53,23 @@ export class MainWorker extends BaseIpc {
                     break;
                 }
                 case InternalOps.SESSION_INFO: {
-                    if (content.data.update || !this.manager.cachedSession)
-                        this.manager.cachedSession = await this.manager.fetchSessions();
-                    message.reply(this.manager.cachedSession);
+                    if (content.data.update || !manager.cachedSession)
+                        manager.cachedSession = await manager.fetchSessions();
+                    message.reply(manager.cachedSession);
                     break;
                 }
                 case InternalOps.REQUEST_IDENTIFY:
-                    await this.manager.concurrencyManager!.waitForIdentify(content.data.shardId);
+                    await manager.concurrencyManager!.waitForIdentify(content.data.shardId);
                     message.reply(null);
                     break;
                 case InternalOps.CANCEL_IDENTIFY:
-                    this.manager.concurrencyManager!.abortIdentify(content.data.shardId);
+                    manager.concurrencyManager!.abortIdentify(content.data.shardId);
                     break;
                 case InternalOps.RESTART:
-                    await this.manager.restart(content.data.clusterId);
+                    await manager.restart(content.data.clusterId);
                     break;
                 case InternalOps.RESTART_ALL:
-                    await this.manager.restartAll();
+                    await manager.restartAll();
                     break;
             }
         } else if (clientEventsValues.includes(message.content.op)) {

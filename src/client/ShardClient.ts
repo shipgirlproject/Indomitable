@@ -21,7 +21,7 @@ export class ShardClient {
         clientOptions.shardCount = EnvProcessData.shardCount;
         if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
-            clientOptions.ws.buildStrategy = ws => new IndomitableStrategy(ws, new BaseWorker(manager));
+            if (!clientOptions.ws.buildStrategy) clientOptions.ws.buildStrategy = ws => new IndomitableStrategy(ws, new BaseWorker());
         }
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
