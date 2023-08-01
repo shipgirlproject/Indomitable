@@ -43,9 +43,7 @@ export class IndomitableFetchingStrategy implements IContextFetchingStrategy {
         const listener = () => this.abortIdentify(shardId);
         try {
             signal.addEventListener('abort', listener);
-            await this.ipc
-                .send({ content, repliable: true })
-                .catch(() => null);
+            await this.ipc.send({ content, repliable: true });
         } finally {
             signal.removeEventListener('abort', listener);
         }
