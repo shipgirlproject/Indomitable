@@ -114,7 +114,7 @@ export class ClusterManager {
             const ms = this.manager.spawnTimeout * this.shards.length;
             const seconds = Math.round(ms / 1000);
             this.manager.emit(LibraryEvents.DEBUG, `Waiting for client ready event for ${seconds} second(s)`);
-            let timeout: NodeJS.Timer|undefined;
+            let timeout: NodeJS.Timeout;
             const listener = (data: ShardEventData) => {
                 if (data.clusterId !== this.id) return;
                 this.ready = true;

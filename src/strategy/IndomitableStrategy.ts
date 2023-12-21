@@ -10,7 +10,7 @@ import {
     WebSocketShardDestroyRecovery,
     WebSocketShardStatus
 } from '@discordjs/ws';
-import { Collection } from 'discord.js';
+import { Collection } from '@discordjs/collection';
 import { MainStrategyData, MainStrategyOps } from '../Util';
 import { MainStrategyWorker } from '../ipc/MainStrategyWorker';
 import { BaseWorker } from '../ipc/BaseWorker';
