@@ -1,14 +1,18 @@
-import { SimpleIdentifyThrottler } from '@discordjs/ws';
+import { ExtendedMap } from './ExtendedMap';
+import { AsyncQueue } from './AsyncQueue';
+import { Delay } from '../Util';
 
 /**
- * A wrapper for @discordjs/ws to work exclusively with Indomitable's dynamic concurrency with support for abort controller
+ * Based on Discord.JS Simple Identify Throttler, for use of Indomitable
  */
 export class ConcurrencyManager {
-    private readonly throttler: SimpleIdentifyThrottler;
+    private readonly queues: ExtendedMap;
     private readonly signals: Map<number, AbortController>;
+    private readonly concurrency: number;
     constructor(concurrency: number) {
-        this.throttler = new SimpleIdentifyThrottler(concurrency);
+        this.queues = new ExtendedMap();
         this.signals = new Map();
+        this.concurrency = concurrency;
     }
 
     /**
@@ -16,12 +20,32 @@ export class ConcurrencyManager {
      */
     public async waitForIdentify(shardId: number): Promise<void> {
         try {
-            let abort = this.signals.get(shardId);
-            if (!abort) {
-                abort = new AbortController();
-                this.signals.set(shardId, abort);
+            const abort = this.signals.get(shardId) || new AbortController();
+
+            if (!this.signals.has(shardId)) this.signals.set(shardId, abort);
+
+            const key = shardId % this.concurrency;
+            const state = this.queues.ensure(key, () => {
+                return {
+                    queue: new AsyncQueue(),
+                    resets: Number.POSITIVE_INFINITY
+                };
+            });
+            
+            try {
+                await state.queue.wait({ signal: abort.signal });
+
+                const difference = state.resets - Date.now();
+
+                if (difference <= 5000) {
+                    const time = difference + Math.random() * 1500;
+                    await Delay(time);
+                }
+
+                state.resets = Date.now() + 5_000;
+            } finally {
+                state.queue.shift();
             }
-            await this.throttler.waitForIdentify(shardId, abort.signal);
         } finally {
             this.signals.delete(shardId);
         }
