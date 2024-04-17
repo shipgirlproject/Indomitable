@@ -1,7 +1,7 @@
 {
   "name": "indomitable",
-  "version": "4.1.0",
-  "description": "A lightweight (the actual ship is heavy though), performant, and powerful sharder for Discord.JS",
+  "version": "4.2.0",
+  "description": "A lightweight (the actual ship is heavy though) no depedencies, performant, and powerful sharder for Discord.JS",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -44,21 +44,17 @@
   },
   "homepage": "https://github.com/Deivu/Indomitable#readme",
   "peerDependencies": {
-    "@discordjs/ws": ">=1.0.x",
     "discord.js": ">=14.14.x"
   },
   "devDependencies": {
-    "@augu/eslint-config": "^5.0.0",
-    "@types/node": "^20.10.5",
+    "@augu/eslint-config": "^5.2.1",
+    "@types/node": "^20.12.7",
     "@types/ws": "^8.5.10",
-    "@typescript-eslint/eslint-plugin": "^6.15.0",
-    "@typescript-eslint/parser": "^6.15.0",
+    "@typescript-eslint/eslint-plugin": "^7.7.0",
+    "@typescript-eslint/parser": "^7.7.0",
     "eslint": "^8.56.0",
-    "tsup": "^8.0.1",
-    "typedoc": "^0.25.4",
-    "typescript": "^5.3.3"
-  },
-  "dependencies": {
-    "@discordjs/collection": "^2.0.0"
+    "tsup": "^8.0.2",
+    "typedoc": "^0.25.13",
+    "typescript": "^5.4.5"
   }
 }

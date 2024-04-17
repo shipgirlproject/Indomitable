@@ -1,9 +1,9 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
 import { Indomitable } from '../Indomitable';
 import { EnvProcessData, ClientEvents, ClientEventData } from '../Util';
-import { IndomitableStrategy } from '../strategy/IndomitableStrategy';
 import { ShardClientUtil } from './ShardClientUtil';
 import { BaseWorker } from '../ipc/BaseWorker';
+import { ConcurrencyClient } from '../concurrency/ConcurrencyClient';
 
 export interface PartialInternalEvents {
     op: ClientEvents,
@@ -21,8 +21,8 @@ export class ShardClient {
         clientOptions.shardCount = EnvProcessData.shardCount;
         if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
-            if (!clientOptions.ws.buildStrategy) clientOptions.ws.buildStrategy = ws => new IndomitableStrategy(ws, new BaseWorker());
-        }
+            clientOptions.ws.buildIdentifyThrottler = () => Promise.resolve(new ConcurrencyClient(new BaseWorker()));
+        }   
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
         this.client.shard = new ShardClientUtil(this.client, manager);
@@ -30,7 +30,7 @@ export class ShardClient {
     }
 
     public async start(token: string): Promise<void> {
-        // attach listeners
+        // attach listeners 
         this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));
         this.client.on('shardReady', (shardId: number) => this.send({ op: ClientEvents.SHARD_READY, data: { clusterId: this.clusterId, shardId }}));
         this.client.on('shardReconnecting', (shardId: number) => this.send({ op: ClientEvents.SHARD_RECONNECT, data: { clusterId: this.clusterId, shardId }}));

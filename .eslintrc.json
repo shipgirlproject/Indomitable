@@ -1,6 +1,5 @@
 {
     "parser": "@typescript-eslint/parser",
-    "extends": "@augu",
     "rules": {
         "indent": ["error", 4, { "SwitchCase": 1 }],
         "quotes": ["error", "single"],
