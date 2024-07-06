@@ -53,7 +53,6 @@ export abstract class BaseIpc {
     public send(transportable: Transportable): Promise<unknown|undefined> {
         return new Promise((resolve, reject) => {
             if (!this.available()) {
-                this.manager.emit(LibraryEvents.DEBUG, 'IPC tried to send a message, but the ipc communication is not yet ready');
                 return resolve(undefined);
             }
             const repliable = transportable.repliable || false;
