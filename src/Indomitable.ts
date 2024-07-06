@@ -16,7 +16,8 @@ import {
     LibraryEvents,
     Message,
     SessionObject,
-    Transportable
+    Transportable,
+    Sendable
 } from './Util';
 
 /**
@@ -278,18 +279,30 @@ export class Indomitable extends EventEmitter {
      * Sends a message to a specific cluster
      * @returns A promise that resolves to undefined or an unknown value depending on how you reply to it
      */
-    public async send(id: number, transportable: Transportable): Promise<unknown|undefined> {
+    public async send(id: number, sendable: Sendable): Promise<unknown|undefined> {
         const cluster = this.clusters.get(id);
         if (!cluster) throw new Error('Invalid cluster id provided');
+
         let abortableData: AbortableData|undefined;
-        if (!transportable.signal && (this.ipcTimeout !== Infinity && transportable.repliable)) {
+        if (this.ipcTimeout !== Infinity && sendable.repliable) {
             abortableData = MakeAbortableRequest(this.ipcTimeout);
+        }
+
+        let transportable: Transportable = {
+            content: sendable.content,
+            repliable: sendable.repliable
+        };
+
+        if (abortableData) {
             transportable.signal = abortableData.controller.signal;
         }
+
         try {
             return await cluster.ipc.send(transportable);
         } finally {
-            if (abortableData) clearTimeout(abortableData.timeout);
+            if (abortableData) {
+                clearTimeout(abortableData.timeout);
+            }
         }
     }
 
@@ -297,19 +310,9 @@ export class Indomitable extends EventEmitter {
      * Sends a message on all clusters
      * @returns An array of promise that resolves to undefined or an unknown value depending on how you reply to it
      */
-    public async broadcast(transportable: Transportable): Promise<unknown[]|undefined> {
-        let abortableData: AbortableData|undefined;
-        if (!transportable.signal && (this.ipcTimeout !== Infinity && transportable.repliable)) {
-            abortableData = MakeAbortableRequest(this.ipcTimeout);
-            transportable.signal = abortableData.controller.signal;
-        }
-        try {
-            const results = await Promise.all([ ...this.clusters.values() ].map(cluster => cluster.ipc.send(transportable)));
-            if (!transportable.repliable) return undefined;
-            return results;
-        } finally {
-            if (abortableData) clearTimeout(abortableData.timeout);
-        }
+    public broadcast(sendable: Sendable): Promise<unknown[]> {
+        const clusters = [ ...this.clusters.keys() ];
+        return Promise.all(clusters.map(id => this.send(id, sendable)));
     }
 
     /**

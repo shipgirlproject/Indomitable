@@ -134,13 +134,18 @@ export interface IpcErrorData {
 }
 
 /**
- * Data structure representing IPC data
+ * Data structure representing user ipc data with abort signal attached to it
  */
 export interface Transportable {
     content: any;
     repliable?: boolean;
     signal?: AbortSignal
 }
+
+/**
+ * Data structure representing user ipc data
+ */
+export type Sendable = Omit<Transportable, 'signal'>;
 
 /**
  * Data structure representing an internal abort data
