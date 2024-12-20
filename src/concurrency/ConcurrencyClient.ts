@@ -1,4 +1,4 @@
-import { InternalOps, InternalOpsData } from '../Util';
+import { Fetch } from '../Util';
 import { BaseWorker } from '../ipc/BaseWorker';
 
 /**
@@ -6,25 +6,29 @@ import { BaseWorker } from '../ipc/BaseWorker';
  */
 export class ConcurrencyClient {
     private ipc: BaseWorker;
+    private readonly address: string;
+    private readonly port: number;
+    private readonly password: string;
+
     constructor(ipc: BaseWorker) {
         this.ipc = ipc;
+        this.address = process.env.INDOMITABLE_CONCURRENCY_SERVER_ADDRESS!;
+        this.port = Number(process.env.INDOMITABLE_CONCURRENCY_SERVER_PORT!);
+        this.password = process.env.INDOMITABLE_CONCURRENCY_SERVER_PASSWORD!;
     }
 
     /**
      * Method to try and acquire a lock for identify
      */
     public async waitForIdentify(shardId: number, signal: AbortSignal): Promise<void> {
-        const content: InternalOpsData = {
-            op: InternalOps.REQUEST_IDENTIFY,
-            data: { shardId },
-            internal: true
-        };
-        const listener = () => this.abortIdentify(shardId);
-        try {
-            signal.addEventListener('abort', listener);
-            await this.ipc.send({ content, repliable: true });
-        } finally {
-            signal.removeEventListener('abort', listener);
+        const url = new URL(`http://${this.address}:${this.port}/concurrency/acquire`);
+        url.searchParams.append('shardId', shardId.toString());
+
+        const response = await Fetch(url.toString(), { method: 'POST' });
+
+        // 202 = acquire lock cancelled, 204 = success, allow identify, 4xx = something bad happened
+        if (response.code !== 204) {
+            throw new Error('Acquire lock failed');
         }
     }
 
@@ -32,13 +36,10 @@ export class ConcurrencyClient {
      * Aborts an acquire lock request
      */
     private abortIdentify(shardId: number): void {
-        const content: InternalOpsData = {
-            op: InternalOps.CANCEL_IDENTIFY,
-            data: { shardId },
-            internal: true
-        };
-        this.ipc
-            .send({ content, repliable: false })
+        const url = new URL(`http://${this.address}:${this.port}/concurrency/cancel`);
+        url.searchParams.append('shardId', shardId.toString());
+
+        Fetch(url.toString(), { method: 'DELETE' })
             .catch(() => null);
     }
 }

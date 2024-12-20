@@ -73,6 +73,9 @@ export class ClusterManager {
             INDOMITABLE_SHARDS_TOTAL: this.manager.shardCount.toString(),
             INDOMITABLE_CLUSTER: this.id.toString(),
             INDOMITABLE_CLUSTER_TOTAL: this.manager.clusterCount.toString(),
+            INDOMITABLE_CONCURRENCY_SERVER_ADDRESS: this.manager.concurrencyServer?.info.address,
+            INDOMITABLE_CONCURRENCY_SERVER_PORT: this.manager.concurrencyServer?.info.port,
+            INDOMITABLE_CONCURRENCY_SERVER_PASSWORD: this.manager.concurrencyServer?.key,
             ...process.env
         });
         this.worker

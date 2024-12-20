@@ -5,13 +5,14 @@ export declare interface AsyncQueueWaitOptions {
 }
 
 export declare interface AsyncQueueEmitter extends EventEmitter {
+    emit(event: string, args?: unknown): this;
     on(event: 'resolve', listener: (message: string) => void): this;
     once(event: 'resolve', listener: (message: string) => void): this;
     off(event: 'resolve', listener: (event: unknown) => void): this;
 }
 
 export class AsyncQueue {
-    private queue: AsyncQueueEmitter[];
+    private readonly queue: AsyncQueueEmitter[];
     constructor() {
         this.queue = [];
     }
@@ -21,9 +22,10 @@ export class AsyncQueue {
     }
 
     public wait({ signal }: AsyncQueueWaitOptions): Promise<void[]> {
+        // @ts-expect-error: this is ok
         const next = this.remaining ? once(this.queue[this.remaining - 1], 'resolve', { signal }) : Promise.resolve([]);
         
-        const emitter: AsyncQueueEmitter = new EventEmitter();
+        const emitter = new EventEmitter() as AsyncQueueEmitter;
         this.queue.push(emitter);
 
         if (signal) {

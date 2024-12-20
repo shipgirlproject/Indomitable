@@ -56,5 +56,8 @@
     "tsup": "^8.1.0",
     "typedoc": "^0.26.4",
     "typescript": "^5.5.3"
+  },
+  "dependencies": {
+    "fastify": "^5.2.0"
   }
 }
