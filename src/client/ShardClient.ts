@@ -21,7 +21,7 @@ export class ShardClient {
         clientOptions.shardCount = EnvProcessData.shardCount;
         if (manager.handleConcurrency) {
             if (!clientOptions.ws) clientOptions.ws = {};
-            clientOptions.ws.buildIdentifyThrottler = () => Promise.resolve(new ConcurrencyClient(new BaseWorker()));
+            clientOptions.ws.buildIdentifyThrottler = () => Promise.resolve(new ConcurrencyClient());
         }   
         this.client = new manager.client(clientOptions);
         // @ts-expect-error: Override shard client util with indomitable shard client util
