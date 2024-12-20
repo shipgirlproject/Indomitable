@@ -246,14 +246,14 @@ export function Fetch(url: string|URL, options: RequestOptions): Promise<FetchRe
  */
 export async function FetchSessions(token: string): Promise<SessionObject> {
     const url = new URL('https://discord.com/api/v10/gateway/bot');
-    const data = await Fetch(url, {
+    const response = await Fetch(url, {
         method: 'GET',
         headers: { authorization: `Bot ${token}` }
     });
-    if (data.code >= 200 && data.code <= 299)
-        return JSON.parse(data.body);
+    if (response.code >= 200 && response.code <= 299)
+        return JSON.parse(response.body);
     else
-        throw new Error(`Response received is not ok, code: ${data.code}`)
+        throw new Error(`Response received is not ok, code: ${response.code}`)
 }
 
 /**
