@@ -1,4 +1,5 @@
 import Https, { RequestOptions } from 'node:https';
+import Http from 'node:http';
 import { WebSocketShardEvents } from '@discordjs/ws';
 
 /**
@@ -222,10 +223,21 @@ export interface FetchResponse {
  * @param options RequestOptions to modify behavior
  * @returns A promise containing data fetched, or an error
  */
-export function Fetch(url: string|URL, options: RequestOptions): Promise<FetchResponse> {
+export function Fetch(url: string, options: RequestOptions): Promise<FetchResponse> {
     return new Promise((resolve, reject) => {
-        const request = Https.request(url, options, response => {
+        let client;
+
+        if (url.startsWith('http')) {
+            client = Http.request;
+        } else if (url.startsWith('https')) {
+            client = Https.request;
+        } else {
+            throw new Error('Unknown url protocol');
+        }
+
+        const request = client(url, options, response => {
             const chunks: any[] = [];
+
             response.on('data', chunk => chunks.push(chunk));
             response.on('error', reject);
             response.on('end', () => {
@@ -234,6 +246,7 @@ export function Fetch(url: string|URL, options: RequestOptions): Promise<FetchRe
                 resolve({ code, body,  message: response.statusMessage ?? '' });
             });
         });
+
         request.on('error', reject);
         request.end();
     });
@@ -246,7 +259,7 @@ export function Fetch(url: string|URL, options: RequestOptions): Promise<FetchRe
  */
 export async function FetchSessions(token: string): Promise<SessionObject> {
     const url = new URL('https://discord.com/api/v10/gateway/bot');
-    const response = await Fetch(url, {
+    const response = await Fetch(url.toString(), {
         method: 'GET',
         headers: { authorization: `Bot ${token}` }
     });
