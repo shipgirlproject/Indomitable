@@ -61,7 +61,7 @@ export class ConcurrencyClient {
     }
 
     public async checkServer(): Promise<number> {
-        const url = new URL(`http://${this.address}:${this.port}/concurrency/acquire`);
+        const url = new URL(`http://${this.address}:${this.port}/concurrency/check`);
         url.searchParams.append('shardId', '0');
         const response = await Fetch(url.toString(), {
             method: 'POST',
