@@ -106,7 +106,7 @@ export class ConcurrencyServer {
         if (request.method === 'POST' && request.url.includes('/concurrency/check')) {
             response.statusCode = 200;
             response.statusMessage = 'OK';
-            return void response.end(now);
+            return void response.end(now.toString());
         }
 
         response.statusCode = 404;
