@@ -83,8 +83,8 @@ export class ConcurrencyServer {
 
         if (request.method === 'DELETE' && request.url.includes('/concurrency/cancel')) {
             this.concurrency.abortIdentify(shardId);
-            response.statusCode = 200;
-            response.statusMessage = 'OK';
+            response.statusCode = 204;
+            response.statusMessage = 'No Content';
             return void response.end();
         }
 
