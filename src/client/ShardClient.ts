@@ -2,7 +2,6 @@ import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js
 import { Indomitable } from '../Indomitable';
 import { EnvProcessData, ClientEvents, ClientEventData } from '../Util';
 import { ShardClientUtil } from './ShardClientUtil';
-import { BaseWorker } from '../ipc/BaseWorker';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient';
 
 export interface PartialInternalEvents {

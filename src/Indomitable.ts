@@ -2,10 +2,10 @@ import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js
 import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
 import Os from 'node:os';
-import { clearTimeout } from 'timers';
+import { clearTimeout } from 'node:timers';
 import { ConcurrencyServer } from './concurrency/ConcurrencyServer';
 import { ShardClient } from './client/ShardClient';
-import { ClusterManager } from './manager/ClusterManager.js';
+import { ClusterManager } from './manager/ClusterManager';
 import {
     Chunk,
     FetchSessions,

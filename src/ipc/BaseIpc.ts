@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 import { Serializable } from 'node:child_process';
-import { randomUUID } from 'crypto';
-import { Indomitable } from '../Indomitable.js';
+import { randomUUID } from 'node:crypto';
+import { Indomitable } from '../Indomitable';
 import {
     InternalAbortSignal,
     InternalPromise,

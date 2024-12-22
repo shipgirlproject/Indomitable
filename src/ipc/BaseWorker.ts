@@ -1,7 +1,7 @@
 import EventEmitter from 'node:events';
 import { Serializable } from 'node:child_process';
 import { Indomitable } from '../Indomitable';
-import { BaseIpc } from './BaseIpc.js';
+import { BaseIpc } from './BaseIpc';
 import { Message, RawIpcMessage } from '../Util';
 
 /**

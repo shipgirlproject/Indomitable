@@ -3,7 +3,6 @@ import { ConcurrencyManager } from './ConcurrencyManager';
 import { Indomitable } from '../Indomitable';
 import { LibraryEvents } from '../Util';
 import Http from 'node:http';
-import QueryString from 'node:querystring';
 
 /**
  * Server that handles identify locks

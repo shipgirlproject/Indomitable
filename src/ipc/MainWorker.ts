@@ -1,5 +1,5 @@
-import { BaseIpc } from './BaseIpc.js';
-import { ClusterManager } from '../manager/ClusterManager.js';
+import { BaseIpc } from './BaseIpc';
+import { ClusterManager } from '../manager/ClusterManager';
 import { Indomitable } from '../Indomitable';
 import {
     InternalOps,
