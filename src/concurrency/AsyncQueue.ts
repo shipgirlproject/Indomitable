@@ -1,11 +1,11 @@
-import { EventEmitter, once } from 'events';
+import { EventEmitter, once } from 'node:events';
 
 export declare interface AsyncQueueWaitOptions {
     signal?: AbortSignal | undefined;
 }
 
 export class AsyncQueue {
-    private readonly queue: EventEmitter[];
+    private readonly queue: NodeJS.EventEmitter[];
     constructor() {
         this.queue = [];
     }
@@ -15,10 +15,10 @@ export class AsyncQueue {
     }
 
     public wait({ signal }: AsyncQueueWaitOptions): Promise<void[]> {
-        // @ts-expect-error: this is ok
+
         const next = this.remaining ? once(this.queue[this.remaining - 1], 'resolve', { signal }) : Promise.resolve([]);
         
-        const emitter = new EventEmitter();
+        const emitter = new EventEmitter() as NodeJS.EventEmitter;
 
         this.queue.push(emitter);
 
@@ -35,7 +35,7 @@ export class AsyncQueue {
 
     public shift(): void {
         const emitter = this.queue.shift();
-        // @ts-expect-error: emit exists in event emitter
+
         if (typeof emitter !== 'undefined') emitter.emit('resolve');
     }
 }
