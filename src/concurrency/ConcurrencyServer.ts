@@ -1,5 +1,6 @@
 import { AddressInfo } from 'node:net';
 import { ConcurrencyManager } from './ConcurrencyManager';
+import { once } from 'node:events';
 import Http from 'node:http';
 
 /**
@@ -106,10 +107,9 @@ export class ConcurrencyServer {
      */
     public start(): Promise<AddressInfo> {
         return new Promise((resolve, reject) => {
-            this.server.listen((error: Error, addressInfo: AddressInfo) => {
-                if (error) return reject(error);
-                resolve(addressInfo);
-            })
+            this.server.listen();
+            this.server.once('listening', () => resolve(this.info))
+            this.server.once('error', reject)
         })
     }
 }
