@@ -8,6 +8,10 @@ import Http from 'node:http';
  * Server that handles identify locks
  */
 export class ConcurrencyServer {
+    /**
+     * Indomitable instance of this server
+     * @private
+     */
     private readonly manager: Indomitable;
     /**
      * Http server of this instance
