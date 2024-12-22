@@ -1,8 +1,9 @@
 import { AddressInfo } from 'node:net';
 import { ConcurrencyManager } from './ConcurrencyManager';
 import { Indomitable } from '../Indomitable';
+import { LibraryEvents } from '../Util';
 import Http from 'node:http';
-import {LibraryEvents} from "../Util";
+import QueryString from 'node:querystring';
 
 /**
  * Server that handles identify locks
@@ -10,7 +11,7 @@ import {LibraryEvents} from "../Util";
 export class ConcurrencyServer {
     private readonly manager: Indomitable;
     /**
-     * Fastify instance of this server
+     * Http server of this instance
      * @private
      */
     private readonly server: Http.Server;
@@ -64,15 +65,13 @@ export class ConcurrencyServer {
             return void response.end();
         }
 
-        // @ts-expect-error: this is ok
-        if (!request.query.hasOwnProperty('shardId')) {
+        if (!request.url.includes('?shardId=')) {
             response.statusCode = 400;
             response.statusMessage = 'Bad Request';
             return void response.end('Missing shardId query string');
         }
 
-        // @ts-expect-error: this is ok
-        const shardId = Number(request.query['shardId']);
+        const shardId = Number(request.url.split('?shardId=')[1]);
 
         if (isNaN(shardId)) {
             response.statusCode = 400;
