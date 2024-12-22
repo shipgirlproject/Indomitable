@@ -67,6 +67,6 @@ export class ConcurrencyClient {
             method: 'POST',
             headers: { authorization: this.password }
         });
-        return response.body;
+        return Number(response.body);
     }
 }
