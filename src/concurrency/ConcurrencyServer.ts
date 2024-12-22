@@ -106,7 +106,7 @@ export class ConcurrencyServer {
      */
     public start(): Promise<AddressInfo> {
         return new Promise((resolve) => {
-            this.server.listen(0 , () => resolve(this.info));
+            this.server.listen(0 , '127.0.0.1', () => resolve(this.info));
         })
     }
 }
