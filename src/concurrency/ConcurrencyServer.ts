@@ -53,6 +53,8 @@ export class ConcurrencyServer {
      * @private
      */
     private async handle(request: Http.IncomingMessage, response: Http.ServerResponse): Promise<void> {
+        const now = Date.now();
+
         if (!request.url || request.method !== 'POST' && request.method !== 'DELETE') {
             response.statusCode = 404;
             response.statusMessage = 'Not Found';
@@ -99,6 +101,12 @@ export class ConcurrencyServer {
                 response.statusMessage = 'Accepted';
                 return void response.end('Acquire lock cancelled');
             }
+        }
+
+        if (request.method === 'POST' && request.url.includes('/concurrency/check')) {
+            response.statusCode = 200;
+            response.statusMessage = 'OK';
+            return void response.end(now);
         }
 
         response.statusCode = 404;

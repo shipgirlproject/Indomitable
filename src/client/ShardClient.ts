@@ -1,6 +1,6 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
 import { Indomitable } from '../Indomitable';
-import {EnvProcessData, ClientEvents, ClientEventData, Delay} from '../Util';
+import { EnvProcessData, ClientEvents, ClientEventData, Delay } from '../Util';
 import { ShardClientUtil } from './ShardClientUtil';
 import { ConcurrencyClient } from '../concurrency/ConcurrencyClient';
 
@@ -58,9 +58,8 @@ export class ShardClient {
         if (this.concurrency) {
             // tests the server if it's accessible first before starting the client
             this.client.emit('debug', '[Indomitable]: Handle concurrency enabled! Testing the identify server before logging in...');
-            await this.concurrency.waitForIdentify(0, new AbortSignal())
-            this.client.emit('debug', '[Indomitable]: Identify server responded and is working, waiting 5s before starting...');
-            await Delay(5000);
+            const date = await this.concurrency.checkServer();
+            this.client.emit('debug', `[Indomitable]: Identify server responded and is working, Trip Latency: ${Math.round(Date.now() - date)}ms`);
         }
         // attach listeners 
         this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));

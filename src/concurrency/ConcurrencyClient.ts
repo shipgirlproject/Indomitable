@@ -59,4 +59,14 @@ export class ConcurrencyClient {
             signal.removeEventListener('abort', listener);
         }
     }
+
+    public async checkServer(): Promise<number> {
+        const url = new URL(`http://${this.address}:${this.port}/concurrency/acquire`);
+        url.searchParams.append('shardId', '0');
+        const response = await Fetch(url.toString(), {
+            method: 'POST',
+            headers: { authorization: this.password }
+        });
+        return response.body;
+    }
 }
