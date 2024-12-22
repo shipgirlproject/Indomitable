@@ -38,7 +38,7 @@ export class ConcurrencyServer {
      * Gets the address info assigned for this instance
      */
     public get info(): AddressInfo {
-        return this.server.address as unknown as AddressInfo;
+        return this.server.address() as AddressInfo;
     }
 
     /**
