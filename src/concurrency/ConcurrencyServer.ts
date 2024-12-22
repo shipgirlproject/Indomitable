@@ -1,11 +1,14 @@
 import { AddressInfo } from 'node:net';
 import { ConcurrencyManager } from './ConcurrencyManager';
+import { Indomitable } from '../Indomitable';
 import Http from 'node:http';
+import {LibraryEvents} from "../Util";
 
 /**
  * Server that handles identify locks
  */
 export class ConcurrencyServer {
+    private readonly manager: Indomitable;
     /**
      * Fastify instance of this server
      * @private
@@ -15,15 +18,16 @@ export class ConcurrencyServer {
      * Concurrency manager for this server
      * @private
      */
-    private readonly manager: ConcurrencyManager;
+    private readonly concurrency: ConcurrencyManager;
     /**
      * Randomly generated password to secure this server
      * @private
      */
     private readonly password: string;
-    constructor(concurrency: number) {
+    constructor(manager: Indomitable, concurrency: number) {
+        this.manager = manager;
         this.server = Http.createServer((req, res) => this.handle(req, res));
-        this.manager = new ConcurrencyManager(concurrency);
+        this.concurrency = new ConcurrencyManager(concurrency);
         this.password = Math.random().toString(36).slice(2, 10);
     }
 
@@ -76,8 +80,10 @@ export class ConcurrencyServer {
             return void response.end('Expected shardId to be a number');
         }
 
+        this.manager.emit(LibraryEvents.DEBUG, `Received a request in concurrency server! =>\n  Url: ${request.url}\n  Method: ${request.method}\n  ShardId: ${shardId}`);
+
         if (request.method === 'DELETE' && request.url.includes('/concurrency/cancel')) {
-            this.manager.abortIdentify(shardId);
+            this.concurrency.abortIdentify(shardId);
             response.statusCode = 200;
             response.statusMessage = 'OK';
             return void response.end();
@@ -85,7 +91,7 @@ export class ConcurrencyServer {
 
         if (request.method === 'POST' && request.url.includes('/concurrency/acquire')) {
             try {
-                await this.manager.waitForIdentify(shardId);
+                await this.concurrency.waitForIdentify(shardId);
                 response.statusCode = 204;
                 response.statusMessage = 'No Content';
                 return void response.end();

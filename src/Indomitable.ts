@@ -232,9 +232,9 @@ export class Indomitable extends EventEmitter {
         }
         if (this.handleConcurrency) {
             const sessions = await this.fetchSessions();
-            this.concurrencyServer = new ConcurrencyServer(sessions.session_start_limit.max_concurrency);
+            this.concurrencyServer = new ConcurrencyServer(this, sessions.session_start_limit.max_concurrency);
             const info = await this.concurrencyServer.start();
-            this.emit(LibraryEvents.DEBUG, `Handle concurrency is currently enabled! => Server is currently bound to:\n  Address: ${info.address}:${info.port}\n  Concurrency: ${sessions.session_start_limit.max_concurrency}`);
+            this.emit(LibraryEvents.DEBUG, `Handle concurrency is currently enabled! =>\nServer is currently bound to:\n  Address: ${info.address}:${info.port}\n  Concurrency: ${sessions.session_start_limit.max_concurrency}`);
         }
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
