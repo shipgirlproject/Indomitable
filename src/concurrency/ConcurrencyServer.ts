@@ -25,6 +25,7 @@ export class ConcurrencyServer {
      * @private
      */
     private readonly password: string;
+
     constructor(manager: Indomitable, concurrency: number) {
         this.manager = manager;
         this.server = Http.createServer((req, res) => this.handle(req, res));

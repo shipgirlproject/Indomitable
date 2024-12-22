@@ -4,15 +4,8 @@ export declare interface AsyncQueueWaitOptions {
     signal?: AbortSignal | undefined;
 }
 
-export declare interface AsyncQueueEmitter extends EventEmitter {
-    emit(event: string, args?: unknown): this;
-    on(event: 'resolve', listener: (message: string) => void): this;
-    once(event: 'resolve', listener: (message: string) => void): this;
-    off(event: 'resolve', listener: (event: unknown) => void): this;
-}
-
 export class AsyncQueue {
-    private readonly queue: AsyncQueueEmitter[];
+    private readonly queue: EventEmitter[];
     constructor() {
         this.queue = [];
     }
@@ -25,7 +18,8 @@ export class AsyncQueue {
         // @ts-expect-error: this is ok
         const next = this.remaining ? once(this.queue[this.remaining - 1], 'resolve', { signal }) : Promise.resolve([]);
         
-        const emitter = new EventEmitter() as AsyncQueueEmitter;
+        const emitter = new EventEmitter();
+
         this.queue.push(emitter);
 
         if (signal) {
@@ -41,6 +35,7 @@ export class AsyncQueue {
 
     public shift(): void {
         const emitter = this.queue.shift();
+        // @ts-expect-error: emit exists in event emitter
         if (typeof emitter !== 'undefined') emitter.emit('resolve');
     }
 }
