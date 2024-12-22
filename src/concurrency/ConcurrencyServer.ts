@@ -87,7 +87,7 @@ export class ConcurrencyServer {
             try {
                 await this.manager.waitForIdentify(shardId);
                 response.statusCode = 204;
-                response.statusMessage = 'OK';
+                response.statusMessage = 'No Content';
                 return void response.end();
             } catch (error) {
                 response.statusCode = 202;
