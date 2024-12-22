@@ -227,10 +227,10 @@ export function Fetch(url: string, options: RequestOptions): Promise<FetchRespon
     return new Promise((resolve, reject) => {
         let client;
 
-        if (url.startsWith('http')) {
-            client = Http.request;
-        } else if (url.startsWith('https')) {
+        if (url.startsWith('https')) {
             client = Https.request;
+        } else if (url.startsWith('http')) {
+            client = Http.request;
         } else {
             throw new Error('Unknown url protocol');
         }
