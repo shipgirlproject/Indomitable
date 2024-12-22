@@ -1,17 +1,11 @@
-import { EventEmitter, once } from 'events';
+import { EventEmitter, once } from 'node:events';
 
 export declare interface AsyncQueueWaitOptions {
     signal?: AbortSignal | undefined;
 }
 
-export declare interface AsyncQueueEmitter extends EventEmitter {
-    on(event: 'resolve', listener: (message: string) => void): this;
-    once(event: 'resolve', listener: (message: string) => void): this;
-    off(event: 'resolve', listener: (event: unknown) => void): this;
-}
-
 export class AsyncQueue {
-    private queue: AsyncQueueEmitter[];
+    private readonly queue: NodeJS.EventEmitter[];
     constructor() {
         this.queue = [];
     }
@@ -21,9 +15,11 @@ export class AsyncQueue {
     }
 
     public wait({ signal }: AsyncQueueWaitOptions): Promise<void[]> {
+
         const next = this.remaining ? once(this.queue[this.remaining - 1], 'resolve', { signal }) : Promise.resolve([]);
         
-        const emitter: AsyncQueueEmitter = new EventEmitter();
+        const emitter = new EventEmitter() as NodeJS.EventEmitter;
+
         this.queue.push(emitter);
 
         if (signal) {
@@ -39,6 +35,7 @@ export class AsyncQueue {
 
     public shift(): void {
         const emitter = this.queue.shift();
+
         if (typeof emitter !== 'undefined') emitter.emit('resolve');
     }
 }

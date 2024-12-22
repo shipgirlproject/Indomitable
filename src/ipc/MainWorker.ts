@@ -58,13 +58,6 @@ export class MainWorker extends BaseIpc {
                     message.reply(manager.cachedSession);
                     break;
                 }
-                case InternalOps.REQUEST_IDENTIFY:
-                    await manager.concurrencyManager!.waitForIdentify(content.data.shardId);
-                    message.reply(null);
-                    break;
-                case InternalOps.CANCEL_IDENTIFY:
-                    manager.concurrencyManager!.abortIdentify(content.data.shardId);
-                    break;
                 case InternalOps.RESTART:
                     await manager.restart(content.data.clusterId);
                     break;

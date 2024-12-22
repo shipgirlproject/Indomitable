@@ -1,4 +1,5 @@
 import Https, { RequestOptions } from 'node:https';
+import Http from 'node:http';
 import { WebSocketShardEvents } from '@discordjs/ws';
 
 /**
@@ -41,8 +42,6 @@ export enum InternalOps {
     RESTART = 'restart',
     RESTART_ALL = 'restartAll',
     DESTROY_CLIENT = 'destroyClient',
-    REQUEST_IDENTIFY = 'requestIdentify',
-    CANCEL_IDENTIFY = 'cancelIdentify',
     SESSION_INFO = 'sessionInfo',
     PING = 'ping'
 }
@@ -212,27 +211,42 @@ export interface SessionObject {
 	};
 }
 
+export interface FetchResponse {
+    code: number;
+    message: string;
+    body?: any;
+}
+
 /**
  * Wrapper function for fetching data using HTTP
  * @param url URL of resource to fetch
  * @param options RequestOptions to modify behavior
  * @returns A promise containing data fetched, or an error
  */
-export function Fetch(url: string|URL, options: RequestOptions): Promise<any> {
+export function Fetch(url: string, options: RequestOptions): Promise<FetchResponse> {
     return new Promise((resolve, reject) => {
-        const request = Https.request(url, options, response => {
+        let client;
+
+        if (url.startsWith('https')) {
+            client = Https.request;
+        } else if (url.startsWith('http')) {
+            client = Http.request;
+        } else {
+            throw new Error('Unknown url protocol');
+        }
+
+        const request = client(url, options, response => {
             const chunks: any[] = [];
+
             response.on('data', chunk => chunks.push(chunk));
             response.on('error', reject);
             response.on('end', () => {
                 const code = response.statusCode ?? 500;
                 const body = chunks.join('');
-                if (code >= 200 && code <= 299)
-                    resolve(body);
-                else
-                    reject(new Error(`Response received is not ok, Status Code: ${response.statusCode}, body: ${body}`));
+                resolve({ code, body,  message: response.statusMessage ?? '' });
             });
         });
+
         request.on('error', reject);
         request.end();
     });
@@ -245,11 +259,14 @@ export function Fetch(url: string|URL, options: RequestOptions): Promise<any> {
  */
 export async function FetchSessions(token: string): Promise<SessionObject> {
     const url = new URL('https://discord.com/api/v10/gateway/bot');
-    const data = await Fetch(url, {
+    const response = await Fetch(url.toString(), {
         method: 'GET',
         headers: { authorization: `Bot ${token}` }
     });
-    return JSON.parse(data);
+    if (response.code >= 200 && response.code <= 299)
+        return JSON.parse(response.body);
+    else
+        throw new Error(`Response received is not ok, code: ${response.code}`)
 }
 
 /**

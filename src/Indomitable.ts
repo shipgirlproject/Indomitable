@@ -3,7 +3,7 @@ import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
 import Os from 'node:os';
 import { clearTimeout } from 'timers';
-import { ConcurrencyManager } from './concurrency/ConcurrencyManager';
+import { ConcurrencyServer } from './concurrency/ConcurrencyServer';
 import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './manager/ClusterManager.js';
 import {
@@ -19,6 +19,7 @@ import {
     Transportable,
     Sendable
 } from './Util';
+
 
 /**
  * Options to control Indomitable behavior
@@ -143,7 +144,7 @@ export class Indomitable extends EventEmitter {
     public clusterCount: number|'auto';
     public shardCount: number|'auto';
     public cachedSession?: SessionObject;
-    public concurrencyManager?: ConcurrencyManager;
+    public concurrencyServer?: ConcurrencyServer;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly clusterSettings: ClusterSettings;
     public readonly ipcTimeout: number;
@@ -187,7 +188,7 @@ export class Indomitable extends EventEmitter {
         this.token = options.token;
         this.clusters = new Map();
         this.spawnQueue = [];
-        this.concurrencyManager = undefined;
+        this.concurrencyServer = undefined;
         this.cachedSession = undefined;
         this.busy = false;
     }
@@ -231,8 +232,9 @@ export class Indomitable extends EventEmitter {
         }
         if (this.handleConcurrency) {
             const sessions = await this.fetchSessions();
-            this.concurrencyManager = new ConcurrencyManager(sessions.session_start_limit.max_concurrency);
-            this.emit(LibraryEvents.DEBUG, 'Handle concurrency is currently enabled. Indomitable will automatically handle your identifies that can result to more stable connection');
+            this.concurrencyServer = new ConcurrencyServer(this, sessions.session_start_limit.max_concurrency);
+            const info = await this.concurrencyServer.start();
+            this.emit(LibraryEvents.DEBUG, `Handle concurrency is currently enabled! =>\n  Server is currently bound to:\n    Address: ${info.address}:${info.port}\n    Concurrency: ${sessions.session_start_limit.max_concurrency}`);
         }
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
