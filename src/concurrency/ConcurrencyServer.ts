@@ -83,7 +83,7 @@ export class ConcurrencyServer {
             return void response.end();
         }
 
-        if (request.method === 'DELETE' && request.url.includes('/concurrency/acquire')) {
+        if (request.method === 'POST' && request.url.includes('/concurrency/acquire')) {
             try {
                 await this.manager.waitForIdentify(shardId);
                 response.statusCode = 204;
