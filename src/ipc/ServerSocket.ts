@@ -1,8 +1,8 @@
-import type {Socket} from 'node:net';
-import type {Indomitable} from '../Indomitable';
-import {IpcServer} from './IpcServer';
-import {BaseSocket, Message} from './BaseSocket';
-import {ClientEventData, ClientEvents, InternalOps, InternalOpsData, IpcIdentify, LibraryEvents,} from '../Util';
+import type { Socket } from 'node:net';
+import type { Indomitable } from '../Indomitable';
+import { IpcServer } from './IpcServer';
+import { BaseSocket, Message } from './BaseSocket';
+import { ClientEventData, ClientEvents, InternalOps, InternalOpsData, LibraryEvents, } from '../Util';
 
 const internalOpsValues = Object.values(InternalOps);
 const clientEventsValues = Object.values(ClientEvents);
@@ -34,7 +34,7 @@ export class ServerSocket extends BaseSocket {
 
             if (internalOpsValues.includes(message.content.op)) {
 
-                switch(content.op) {
+                switch (content.op) {
                     case InternalOps.IDENTIFY: {
                         if (content.data.serverId !== this.server.serverId) {
                             this.socket.destroy();
@@ -74,7 +74,7 @@ export class ServerSocket extends BaseSocket {
 
             } else if (clientEventsValues.includes(message.content.op)) {
 
-                switch(content.op) {
+                switch (content.op) {
                     case ClientEvents.READY:
                         this.manager.emit(LibraryEvents.CLIENT_READY, content.data);
                         break;

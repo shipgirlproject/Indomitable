@@ -9,24 +9,24 @@ import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './manager/ClusterManager';
 import { IpcServer } from './ipc/IpcServer';
 import {
+    AbortableData,
     Chunk,
     FetchSessions,
-    MakeAbortableRequest,
-    AbortableData,
     InternalOps,
     InternalOpsData,
     LibraryEvents,
+    MakeAbortableRequest,
+    Sendable,
     SessionObject,
-    Transportable,
-    Sendable
+    Transportable
 } from './Util';
 
 /**
  * Options to control Indomitable behavior
  */
 export interface IndomitableOptions {
-    clusterCount?: number|'auto';
-    shardCount?: number|'auto';
+    clusterCount?: number | 'auto';
+    shardCount?: number | 'auto';
     clientOptions?: DiscordJsClientOptions;
     clusterSettings?: ClusterSettings;
     ipcTimeout?: number;
@@ -43,6 +43,7 @@ export interface ReconfigureOptions {
     clusters?: number;
     shards?: number;
 }
+
 export interface ShardEventData {
     clusterId: number,
     shardId?: number,
@@ -56,84 +57,119 @@ export declare interface Indomitable {
      * @eventProperty
      */
     on(event: 'debug', listener: (message: string) => void): this;
+
     /**
      * Emitted when an IPC message is received
      * @eventProperty
      */
-    on(event: 'message', listener: (message: Message|unknown) => void): this;
+    on(event: 'message', listener: (message: Message | unknown) => void): this;
+
     /**
      * Emitted when an error occurs
      * @eventProperty
      */
     on(event: 'error', listener: (error: unknown) => void): this;
+
     /**
      * Emitted when a new worker process is forked
      * @eventProperty
      */
     on(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+
     /**
      * Emitted when a worker process is ready
      * @eventProperty
      */
     on(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
+
     /**
      * Emitted when a worker process exits
      * @eventProperty
      */
-    on(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+    on(event: 'workerExit', listener: (code: number | null, signal: string | null, cluster: ClusterManager) => void): this;
+
     /**
      * Emitted when a Discord.js shard is ready
      * @eventProperty
      */
     on(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+
     /**
      * Emitted when a Discord.js shard is reconnecting
      * @eventProperty
      */
     on(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+
     /**
      * Emitted when a Discord.js shard resumes
      * @eventProperty
      */
     on(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+
     /**
      * Emitted when a Discord.js shard disconnects
      * @eventProperty
      */
     on(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+
     /**
      * Emitted when a Discord.js client is ready
      * @eventProperty
      */
     on(event: 'clientReady', listener: (event: ShardEventData) => void): this;
+
     /**
      * Emitted on every ipc message the handler receives
      * @eventProperty
      */
     on(event: 'raw', listener: (event: unknown) => void): this;
+
     once(event: 'debug', listener: (message: string) => void): this;
-    once(event: 'message', listener: (message: Message|unknown) => void): this;
+
+    once(event: 'message', listener: (message: Message | unknown) => void): this;
+
     once(event: 'error', listener: (error: unknown) => void): this;
+
     once(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+
     once(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
-    once(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+
+    once(event: 'workerExit', listener: (code: number | null, signal: string | null, cluster: ClusterManager) => void): this;
+
     once(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+
     once(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+
     once(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+
     once(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+
     once(event: 'clientReady', listener: (event: ShardEventData) => void): this;
+
     once(event: 'raw', listener: (event: unknown) => void): this;
+
     off(event: 'debug', listener: (message: string) => void): this;
-    off(event: 'message', listener: (message: Message|unknown) => void): this;
+
+    off(event: 'message', listener: (message: Message | unknown) => void): this;
+
     off(event: 'error', listener: (error: unknown) => void): this;
+
     off(event: 'workerFork', listener: (cluster: ClusterManager) => void): this;
+
     off(event: 'workerReady', listener: (cluster: ClusterManager) => void): this;
-    off(event: 'workerExit', listener: (code: number|null, signal: string|null, cluster: ClusterManager) => void): this;
+
+    off(event: 'workerExit', listener: (code: number | null, signal: string | null, cluster: ClusterManager) => void): this;
+
     off(event: 'shardReady', listener: (event: ShardEventData) => void): this;
+
     off(event: 'shardReconnect', listener: (event: ShardEventData) => void): this;
+
     off(event: 'shardResume', listener: (event: ShardEventData) => void): this;
+
     off(event: 'shardDisconnect', listener: (event: ShardEventData) => void): this;
+
     off(event: 'clientReady', listener: (event: ShardEventData) => void): this;
+
     off(event: 'raw', listener: (event: unknown) => void): this;
 }
 
@@ -141,8 +177,8 @@ export declare interface Indomitable {
  * The main Indomitable class, exposing all functionality.
  */
 export class Indomitable extends EventEmitter {
-    public clusterCount: number|'auto';
-    public shardCount: number|'auto';
+    public clusterCount: number | 'auto';
+    public shardCount: number | 'auto';
     public cachedSession?: SessionObject;
     public concurrencyServer?: ConcurrencyServer;
     public ipcServer?: IpcServer;
@@ -159,6 +195,7 @@ export class Indomitable extends EventEmitter {
     private readonly spawnQueue: ClusterManager[];
     private readonly token: string;
     private busy: boolean;
+
     /**
      * @param [options.clusterCount=auto] The amount of clusters to spawn. Expects a number or 'auto'
      * @param [options.shardCount=auto] The number of shards to create. Expects a number or 'auto'
@@ -177,7 +214,7 @@ export class Indomitable extends EventEmitter {
         super();
         this.clusterCount = options.clusterCount || 'auto';
         this.shardCount = options.shardCount || 'auto';
-        this.clientOptions = options.clientOptions || { intents: [ 1 << 0 ] };
+        this.clientOptions = options.clientOptions || {intents: [1 << 0]};
         this.clusterSettings = options.clusterSettings || {};
         this.ipcTimeout = options.ipcTimeout ?? 30000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
@@ -254,14 +291,14 @@ export class Indomitable extends EventEmitter {
             this.clusterCount = this.shardCount;
 
         this.emit(LibraryEvents.DEBUG, `Starting ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
-        const shards = [ ...Array(this.shardCount).keys() ];
+        const shards = [...Array(this.shardCount).keys()];
         const chunks = Chunk(shards, Math.round(this.shardCount / this.clusterCount));
 
-        Cluster.setupPrimary({ ...{ serialization: 'json' }, ...this.clusterSettings  });
+        Cluster.setupPrimary({...{serialization: 'json'}, ...this.clusterSettings});
 
         for (let id = 0; id < this.clusterCount; id++) {
             const chunk = chunks.shift()!;
-            const cluster = new ClusterManager({ id, shards: chunk, manager: this });
+            const cluster = new ClusterManager({id, shards: chunk, manager: this});
             this.clusters.set(id, cluster);
         }
 
@@ -284,7 +321,7 @@ export class Indomitable extends EventEmitter {
      * Restart all clusters if this instance is the primary process
      * @returns A promise that resolves to void
      */
-    public async restartAll(): Promise<void>  {
+    public async restartAll(): Promise<void> {
         if (!Cluster.isPrimary) return;
         await this.addToSpawnQueue(...this.clusters.values());
     }
@@ -293,11 +330,11 @@ export class Indomitable extends EventEmitter {
      * Sends a message to a specific cluster
      * @returns A promise that resolves to undefined or an unknown value depending on how you reply to it
      */
-    public async send(id: number, sendable: Sendable): Promise<unknown|undefined> {
+    public async send(id: number, sendable: Sendable): Promise<unknown | undefined> {
         const cluster = this.clusters.get(id);
         if (!cluster) throw new Error('Invalid cluster id provided');
 
-        let abortableData: AbortableData|undefined;
+        let abortableData: AbortableData | undefined;
         if (this.ipcTimeout !== Infinity && sendable.reply) {
             abortableData = MakeAbortableRequest(this.ipcTimeout);
         }
@@ -325,7 +362,7 @@ export class Indomitable extends EventEmitter {
      * @returns An array of promise that resolves to undefined or an unknown value depending on how you reply to it
      */
     public broadcast(sendable: Sendable): Promise<unknown[]> {
-        const clusters = [ ...this.clusters.keys() ];
+        const clusters = [...this.clusters.keys()];
         return Promise.all(clusters.map(id => this.send(id, sendable)));
     }
 
@@ -343,17 +380,17 @@ export class Indomitable extends EventEmitter {
         this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.shardCount} shard(s)`);
         const oldClusterCount = Number(this.clusters.size);
         this.clusterCount = options.clusters || this.clusters.size;
-        const shards = [ ...Array(this.shardCount).keys() ];
+        const shards = [...Array(this.shardCount).keys()];
         const chunks = Chunk(shards, Math.round(this.shardCount as number / this.clusterCount));
         if (oldClusterCount < this.clusterCount) {
             const count = this.clusterCount - oldClusterCount;
             for (let id = this.clusterCount - 1; id < count; id++) {
-                const cluster = new ClusterManager({ id, shards: [], manager: this });
+                const cluster = new ClusterManager({id, shards: [], manager: this});
                 this.clusters.set(id, cluster);
             }
         }
         if (oldClusterCount > this.clusterCount) {
-            const keys = [ ...this.clusters.keys() ].reverse();
+            const keys = [...this.clusters.keys()].reverse();
             const range = keys.slice(0, oldClusterCount - this.clusterCount);
             for (const key of range) {
                 const cluster = this.clusters.get(key);
@@ -392,7 +429,7 @@ export class Indomitable extends EventEmitter {
             data: {},
             internal: true
         };
-        await this.send(id, { content, reply: true });
+        await this.send(id, {content, reply: true});
     }
 
     /**

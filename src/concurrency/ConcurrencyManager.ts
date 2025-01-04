@@ -9,6 +9,7 @@ export class ConcurrencyManager {
     private readonly queues: ExtendedMap;
     private readonly signals: Map<number, AbortController>;
     private readonly concurrency: number;
+
     constructor(concurrency: number) {
         this.queues = new ExtendedMap();
         this.signals = new Map();
@@ -31,9 +32,9 @@ export class ConcurrencyManager {
                     resets: Number.POSITIVE_INFINITY
                 };
             });
-            
+
             try {
-                await state.queue.wait({ signal: abort.signal });
+                await state.queue.wait({signal: abort.signal});
 
                 const difference = state.resets - Date.now();
 

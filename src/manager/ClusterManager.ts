@@ -99,7 +99,7 @@ export class ClusterManager {
     /**
      * Remove all listeners on attached worker process and free from memory
      */
-    private cleanup(code: number|null, signal: string|null) {
+    private cleanup(code: number | null, signal: string | null) {
         this.worker?.removeAllListeners();
         this.worker = undefined;
         this.ready = false;

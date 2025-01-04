@@ -5,7 +5,7 @@ export class ExtendedMap extends Map {
 
         value = generator(key, this);
         this.set(key, value)
-        
+
         return value;
     }
 }

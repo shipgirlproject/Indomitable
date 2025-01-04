@@ -51,6 +51,15 @@ export class ConcurrencyServer {
     }
 
     /**
+     * Starts this server
+     */
+    public start(): Promise<AddressInfo> {
+        return new Promise((resolve) => {
+            this.server.listen(0, '127.0.0.1', () => resolve(this.info));
+        })
+    }
+
+    /**
      * Handles the incoming requests
      * @param request
      * @param response
@@ -116,14 +125,5 @@ export class ConcurrencyServer {
         response.statusCode = 404;
         response.statusMessage = 'Not Found';
         return void response.end();
-    }
-
-    /**
-     * Starts this server
-     */
-    public start(): Promise<AddressInfo> {
-        return new Promise((resolve) => {
-            this.server.listen(0 , '127.0.0.1', () => resolve(this.info));
-        })
     }
 }

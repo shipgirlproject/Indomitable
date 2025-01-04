@@ -8,6 +8,7 @@ const internalOpsValues = Object.values(InternalOps);
 export class ClientSocket extends BaseSocket {
     public readonly shard: ShardClientUtil;
     private readonly serverId: string;
+
     constructor(shard: ShardClientUtil, serverId: string) {
         super(new Socket());
         this.shard = shard;
@@ -15,8 +16,8 @@ export class ClientSocket extends BaseSocket {
     }
 
     public connect(): void {
-        this.socket.connect({ path: `./indomitable-${this.serverId}` }, () => {
-            this.identify({ clusterId: this.shard.clusterId, serverId: this.serverId })
+        this.socket.connect({path: `./indomitable-${this.serverId}`}, () => {
+            this.identify({clusterId: this.shard.clusterId, serverId: this.serverId})
                 .catch(() => null);
         });
 
@@ -28,7 +29,7 @@ export class ClientSocket extends BaseSocket {
             internal: true,
             data
         };
-        return this.send({ content, reply: true }) as Promise<void>;
+        return this.send({content, reply: true}) as Promise<void>;
     }
 
     protected handleClose(): void {

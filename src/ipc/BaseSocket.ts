@@ -1,8 +1,8 @@
-import type {Socket} from 'node:net';
+import type { Socket } from 'node:net';
 import {
     InternalAbortSignal,
     InternalPromise,
-    IpcErrorData, IpcIdentify,
+    IpcErrorData,
     RawIpcMessage,
     RawIpcMessageType,
     SavePromiseOptions,
@@ -11,10 +11,10 @@ import {
 import { randomUUID } from 'node:crypto';
 
 export class Message {
+    public readonly content: any;
     private readonly socket: Socket;
     private readonly nonce: string;
     private readonly reply: boolean;
-    public readonly content: any;
 
     constructor(socket: Socket, data: RawIpcMessage) {
         this.socket = socket;
@@ -70,7 +70,7 @@ export abstract class BaseSocket {
      * Raw send method without abort controller handling
      * @param transportable Data to send
      */
-    public send(transportable: Transportable): Promise<unknown|undefined> {
+    public send(transportable: Transportable): Promise<unknown | undefined> {
         return new Promise((resolve, reject) => {
             if (this.socket.destroyed) {
                 return resolve(undefined);
@@ -85,9 +85,15 @@ export abstract class BaseSocket {
             };
             this.socket.write(JSON.stringify(data));
             if (!data.reply) return resolve(undefined);
-            this.waitForPromise({ nonce, resolve, reject, signal: transportable.signal });
+            this.waitForPromise({nonce, resolve, reject, signal: transportable.signal});
         });
     }
+
+    protected abstract handleMessage(message: Message): Promise<void>;
+
+    protected abstract handleError(error: Error): void;
+
+    protected abstract handleClose(): void;
 
     /**
      * Rejects all the pending promises
@@ -112,7 +118,7 @@ export abstract class BaseSocket {
 
         if (typeof data.internal !== 'boolean' && !data.internal) return;
 
-        switch(data.type) {
+        switch (data.type) {
             case RawIpcMessageType.MESSAGE:
                 return void this
                     .handleMessage(new Message(this.socket, data))
@@ -129,7 +135,7 @@ export abstract class BaseSocket {
     }
 
     private waitForPromise(options: SavePromiseOptions): void {
-        let controller: InternalAbortSignal|undefined;
+        let controller: InternalAbortSignal | undefined;
 
         if (options.signal) {
 
@@ -145,7 +151,11 @@ export abstract class BaseSocket {
             controller.signal.addEventListener('abort', listener);
         }
 
-        this.promises.set(options.nonce, { resolve: options.resolve, reject: options.reject, controller } as InternalPromise);
+        this.promises.set(options.nonce, {
+            resolve: options.resolve,
+            reject: options.reject,
+            controller
+        } as InternalPromise);
     }
 
     private handlePromise(data: RawIpcMessage): void {
@@ -169,8 +179,4 @@ export abstract class BaseSocket {
 
         promise.resolve(data.content);
     }
-
-    protected abstract handleMessage(message: Message): Promise<void>;
-    protected abstract handleError(error: Error): void;
-    protected abstract handleClose(): void;
 }

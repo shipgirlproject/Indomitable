@@ -5,11 +5,11 @@ import EventEmitter from 'node:events';
 import { clearTimeout } from 'timers';
 import { ClientSocket } from '../ipc/ClientSocket';
 import {
-    EnvProcessData,
-    MakeAbortableRequest,
     AbortableData,
+    EnvProcessData,
     InternalOps,
     InternalOpsData,
+    MakeAbortableRequest,
     SessionObject,
     Transportable
 } from '../Util';
@@ -19,9 +19,11 @@ export declare interface ShardClientUtil {
      * Emitted when an IPC message from parent process is received
      * @eventProperty
      */
-    on(event: 'message', listener: (message: Message|unknown) => void): this;
-    once(event: 'message', listener: (message: Message|unknown) => void): this;
-    off(event: 'message', listener: (message: Message|unknown) => void): this;
+    on(event: 'message', listener: (message: Message | unknown) => void): this;
+
+    once(event: 'message', listener: (message: Message | unknown) => void): this;
+
+    off(event: 'message', listener: (message: Message | unknown) => void): this;
 }
 
 /**
@@ -29,12 +31,12 @@ export declare interface ShardClientUtil {
  */
 export class ShardClientUtil extends EventEmitter {
     public client: Client;
-    private readonly manager: Indomitable;
     public readonly clusterId: number;
     public readonly clusterCount: number;
     public readonly shardIds: number[];
     public readonly shardCount: number;
     public readonly ipc: ClientSocket;
+    private readonly manager: Indomitable;
 
     constructor(client: Client, manager: Indomitable) {
         super();
@@ -60,7 +62,7 @@ export class ShardClientUtil extends EventEmitter {
             internal: true
         };
         const start = process.hrtime.bigint();
-        const end = await this.send({ content, reply: true }) as number;
+        const end = await this.send({content, reply: true}) as number;
         return Number(BigInt(end) - start);
     }
 
@@ -74,7 +76,7 @@ export class ShardClientUtil extends EventEmitter {
             data: `(${script.toString()})(this, ${JSON.stringify(context)})`,
             internal: true
         };
-        return this.send({ content, reply: true }) as Promise<unknown[]>;
+        return this.send({content, reply: true}) as Promise<unknown[]>;
     }
 
     /**
@@ -93,10 +95,10 @@ export class ShardClientUtil extends EventEmitter {
     public fetchSessions(update: boolean = false): Promise<SessionObject> {
         const content: InternalOpsData = {
             op: InternalOps.SESSION_INFO,
-            data: { update },
+            data: {update},
             internal: true
         };
-        return this.send({ content, reply: true }) as Promise<SessionObject>;
+        return this.send({content, reply: true}) as Promise<SessionObject>;
     }
 
     /**
@@ -106,10 +108,10 @@ export class ShardClientUtil extends EventEmitter {
     public restart(clusterId: number): Promise<undefined> {
         const content: InternalOpsData = {
             op: InternalOps.RESTART,
-            data: { clusterId },
+            data: {clusterId},
             internal: true
         };
-        return this.send({ content }) as Promise<undefined>;
+        return this.send({content}) as Promise<undefined>;
     }
 
     /**
@@ -122,14 +124,14 @@ export class ShardClientUtil extends EventEmitter {
             data: {},
             internal: true
         };
-        return this.send({ content }) as Promise<undefined>;
+        return this.send({content}) as Promise<undefined>;
     }
 
     /**
      * Sends a message to primary process
      * @returns A promise that resolves to void or a repliable object
      */
-    public async send(transportable: Transportable): Promise<unknown|undefined> {
+    public async send(transportable: Transportable): Promise<unknown | undefined> {
         let abortableData: AbortableData | undefined;
         if (!transportable.signal && (this.manager.ipcTimeout !== Infinity && transportable.reply)) {
             abortableData = MakeAbortableRequest(this.manager.ipcTimeout);

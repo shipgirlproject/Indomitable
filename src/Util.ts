@@ -201,14 +201,14 @@ export interface RawIpcMessage extends InternalData {
  * Data structure representing a Discord session
  */
 export interface SessionObject {
-	url: string;
-	shards: number;
-	session_start_limit: {
-		total: number;
-		remaining: number;
-		reset_after: number;
+    url: string;
+    shards: number;
+    session_start_limit: {
+        total: number;
+        remaining: number;
+        reset_after: number;
         max_concurrency: number;
-	};
+    };
 }
 
 export interface FetchResponse {
@@ -243,7 +243,7 @@ export function Fetch(url: string, options: RequestOptions): Promise<FetchRespon
             response.on('end', () => {
                 const code = response.statusCode ?? 500;
                 const body = chunks.join('');
-                resolve({ code, body,  message: response.statusMessage ?? '' });
+                resolve({code, body, message: response.statusMessage ?? ''});
             });
         });
 
@@ -261,7 +261,7 @@ export async function FetchSessions(token: string): Promise<SessionObject> {
     const url = new URL('https://discord.com/api/v10/gateway/bot');
     const response = await Fetch(url.toString(), {
         method: 'GET',
-        headers: { authorization: `Bot ${token}` }
+        headers: {authorization: `Bot ${token}`}
     });
     if (response.code >= 200 && response.code <= 299)
         return JSON.parse(response.body);
@@ -278,7 +278,7 @@ export async function FetchSessions(token: string): Promise<SessionObject> {
 export function Chunk(original: any[], chunks: number): any[] {
     const array = [];
     for (let i = 0; i < original.length; i += chunks)
-        array.push(original.slice(i , i + chunks));
+        array.push(original.slice(i, i + chunks));
     return array;
 }
 
@@ -303,5 +303,5 @@ export function MakeAbortableRequest(delay: number): AbortableData {
         () => controller.abort(new Error(`The request has been aborted in ${seconds} second(s)`)),
         delay
     );
-    return { controller, timeout };
+    return {controller, timeout};
 }

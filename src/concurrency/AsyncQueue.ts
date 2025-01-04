@@ -6,6 +6,7 @@ export declare interface AsyncQueueWaitOptions {
 
 export class AsyncQueue {
     private readonly queue: NodeJS.EventEmitter[];
+
     constructor() {
         this.queue = [];
     }
@@ -14,10 +15,10 @@ export class AsyncQueue {
         return this.queue.length;
     }
 
-    public wait({ signal }: AsyncQueueWaitOptions): Promise<void[]> {
+    public wait({signal}: AsyncQueueWaitOptions): Promise<void[]> {
 
-        const next = this.remaining ? once(this.queue[this.remaining - 1], 'resolve', { signal }) : Promise.resolve([]);
-        
+        const next = this.remaining ? once(this.queue[this.remaining - 1], 'resolve', {signal}) : Promise.resolve([]);
+
         const emitter = new EventEmitter() as NodeJS.EventEmitter;
 
         this.queue.push(emitter);

@@ -2,15 +2,15 @@ import type { Indomitable } from '../Indomitable';
 import type { ServerSocket } from './ServerSocket';
 
 import { randomUUID } from 'node:crypto';
-import { createServer, Server, Socket } from 'node:net';
+import { createServer, Server } from 'node:net';
 import { LibraryEvents } from '../Util';
 
 
 export class IpcServer {
+    public readonly serverId: string;
     private readonly manager: Indomitable;
     private readonly server: Server;
     private readonly sockets: Map<string, ServerSocket>;
-    public readonly serverId: string;
 
     constructor(manager: Indomitable) {
         this.manager = manager;

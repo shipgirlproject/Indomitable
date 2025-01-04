@@ -30,7 +30,7 @@ export class ConcurrencyClient {
 
             Fetch(url.toString(), {
                 method: 'DELETE',
-                headers: { authorization: this.password }
+                headers: {authorization: this.password}
             }).catch(() => null);
         }
 
@@ -39,7 +39,7 @@ export class ConcurrencyClient {
 
             const response = await Fetch(url.toString(), {
                 method: 'POST',
-                headers: { authorization: this.password }
+                headers: {authorization: this.password}
             });
 
             if (response.code === 202 || response.code === 204) {
@@ -65,7 +65,7 @@ export class ConcurrencyClient {
         url.searchParams.append('shardId', '0');
         const response = await Fetch(url.toString(), {
             method: 'POST',
-            headers: { authorization: this.password }
+            headers: {authorization: this.password}
         });
         return Number(response.body);
     }
