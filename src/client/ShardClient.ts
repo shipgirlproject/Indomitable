@@ -59,26 +59,26 @@ export class ShardClient {
             // tests the server if it's accessible first before starting the client
             this.client.emit('debug', '[Indomitable]: Handle concurrency enabled! Testing the identify server before logging in...');
             const date = await this.concurrency.checkServer();
-            this.client.emit('debug', `[Indomitable]: Identify server responded and is working, Trip Latency: ${Math.round(Date.now() - date)}ms`);
+            this.client.emit('debug', `[Indomitable]: Identify server responded and is working, Trip Latency: ${ Math.round(Date.now() - date) }ms`);
         }
         // attach listeners 
-        this.client.once('ready', () => this.send({op: ClientEvents.READY, data: {clusterId: this.clusterId}}));
+        this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId } }));
         this.client.on('shardReady', (shardId: number) => this.send({
             op: ClientEvents.SHARD_READY,
-            data: {clusterId: this.clusterId, shardId}
+            data: { clusterId: this.clusterId, shardId }
         }));
         this.client.on('shardReconnecting', (shardId: number) => this.send({
             op: ClientEvents.SHARD_RECONNECT,
-            data: {clusterId: this.clusterId, shardId}
+            data: { clusterId: this.clusterId, shardId }
         }));
         this.client.on('shardResume', (shardId: number, replayed: number) => this.send({
             op: ClientEvents.SHARD_RESUME,
-            data: {clusterId: this.clusterId, shardId, replayed}
+            data: { clusterId: this.clusterId, shardId, replayed }
         }));
         // @ts-ignore -- Discord.JS faulty typings?
         this.client.on('shardDisconnect', (event: CloseEvent, shardId: number) => this.send({
             op: ClientEvents.SHARD_DISCONNECT,
-            data: {clusterId: this.clusterId, shardId, event}
+            data: { clusterId: this.clusterId, shardId, event }
         }));
         await this.client.login(token);
     }
@@ -91,9 +91,9 @@ export class ShardClient {
     private send(partial: PartialInternalEvents): void {
         // @ts-ignore -- our own class
         const shardClientUtil = this.client.shard as ShardClientUtil;
-        const content: ClientEventData = {...partial, internal: true};
+        const content: ClientEventData = { ...partial, internal: true };
         shardClientUtil
-            .send({content, reply: false})
+            .send({ content, reply: false })
             .catch((error: unknown) => this.client.emit(ClientEvents.ERROR, error as Error));
     }
 }

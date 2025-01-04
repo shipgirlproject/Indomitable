@@ -18,7 +18,7 @@ export class ServerSocket extends BaseSocket {
     }
 
     protected handleClose(): void {
-        this.manager.emit(LibraryEvents.DEBUG, `A socket closed with ${this.socket.bytesRead} byte(s) data written`);
+        this.manager.emit(LibraryEvents.DEBUG, `A socket closed with ${ this.socket.bytesRead } byte(s) data written`);
     }
 
     protected handleError(error: Error): void {

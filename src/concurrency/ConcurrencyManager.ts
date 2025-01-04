@@ -34,7 +34,7 @@ export class ConcurrencyManager {
             });
 
             try {
-                await state.queue.wait({signal: abort.signal});
+                await state.queue.wait({ signal: abort.signal });
 
                 const difference = state.resets - Date.now();
 
@@ -57,6 +57,6 @@ export class ConcurrencyManager {
      */
     public abortIdentify(shardId: number): void {
         const signal = this.signals.get(shardId);
-        signal?.abort(`Shard ${shardId} aborted the identify request`);
+        signal?.abort(`Shard ${ shardId } aborted the identify request`);
     }
 }

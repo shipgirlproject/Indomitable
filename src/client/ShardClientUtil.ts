@@ -62,7 +62,7 @@ export class ShardClientUtil extends EventEmitter {
             internal: true
         };
         const start = process.hrtime.bigint();
-        const end = await this.send({content, reply: true}) as number;
+        const end = await this.send({ content, reply: true }) as number;
         return Number(BigInt(end) - start);
     }
 
@@ -73,10 +73,10 @@ export class ShardClientUtil extends EventEmitter {
     public broadcastEval(script: Function, context: any = {}): Promise<unknown[]> {
         const content: InternalOpsData = {
             op: InternalOps.EVAL,
-            data: `(${script.toString()})(this, ${JSON.stringify(context)})`,
+            data: `(${ script.toString() })(this, ${ JSON.stringify(context) })`,
             internal: true
         };
-        return this.send({content, reply: true}) as Promise<unknown[]>;
+        return this.send({ content, reply: true }) as Promise<unknown[]>;
     }
 
     /**
@@ -95,10 +95,10 @@ export class ShardClientUtil extends EventEmitter {
     public fetchSessions(update: boolean = false): Promise<SessionObject> {
         const content: InternalOpsData = {
             op: InternalOps.SESSION_INFO,
-            data: {update},
+            data: { update },
             internal: true
         };
-        return this.send({content, reply: true}) as Promise<SessionObject>;
+        return this.send({ content, reply: true }) as Promise<SessionObject>;
     }
 
     /**
@@ -108,10 +108,10 @@ export class ShardClientUtil extends EventEmitter {
     public restart(clusterId: number): Promise<undefined> {
         const content: InternalOpsData = {
             op: InternalOps.RESTART,
-            data: {clusterId},
+            data: { clusterId },
             internal: true
         };
-        return this.send({content}) as Promise<undefined>;
+        return this.send({ content }) as Promise<undefined>;
     }
 
     /**
@@ -124,7 +124,7 @@ export class ShardClientUtil extends EventEmitter {
             data: {},
             internal: true
         };
-        return this.send({content}) as Promise<undefined>;
+        return this.send({ content }) as Promise<undefined>;
     }
 
     /**

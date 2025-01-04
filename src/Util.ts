@@ -243,7 +243,7 @@ export function Fetch(url: string, options: RequestOptions): Promise<FetchRespon
             response.on('end', () => {
                 const code = response.statusCode ?? 500;
                 const body = chunks.join('');
-                resolve({code, body, message: response.statusMessage ?? ''});
+                resolve({ code, body, message: response.statusMessage ?? '' });
             });
         });
 
@@ -261,12 +261,12 @@ export async function FetchSessions(token: string): Promise<SessionObject> {
     const url = new URL('https://discord.com/api/v10/gateway/bot');
     const response = await Fetch(url.toString(), {
         method: 'GET',
-        headers: {authorization: `Bot ${token}`}
+        headers: { authorization: `Bot ${ token }` }
     });
     if (response.code >= 200 && response.code <= 299)
         return JSON.parse(response.body);
     else
-        throw new Error(`Response received is not ok, code: ${response.code}`)
+        throw new Error(`Response received is not ok, code: ${ response.code }`)
 }
 
 /**
@@ -300,8 +300,8 @@ export function MakeAbortableRequest(delay: number): AbortableData {
     const controller = new AbortController();
     const seconds = Math.round(delay / 1000);
     const timeout = setTimeout(
-        () => controller.abort(new Error(`The request has been aborted in ${seconds} second(s)`)),
+        () => controller.abort(new Error(`The request has been aborted in ${ seconds } second(s)`)),
         delay
     );
-    return {controller, timeout};
+    return { controller, timeout };
 }

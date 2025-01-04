@@ -20,17 +20,17 @@ export class ConcurrencyClient {
      * If it errors that isn't anything from websocket shard, this will have issues
      */
     public async waitForIdentify(shardId: number, signal: AbortSignal): Promise<void> {
-        const url = new URL(`http://${this.address}:${this.port}/concurrency/acquire`);
+        const url = new URL(`http://${ this.address }:${ this.port }/concurrency/acquire`);
         url.searchParams.append('shardId', shardId.toString());
 
         const listener = () => {
-            const url = new URL(`http://${this.address}:${this.port}/concurrency/cancel`);
+            const url = new URL(`http://${ this.address }:${ this.port }/concurrency/cancel`);
 
             url.searchParams.append('shardId', shardId.toString());
 
             Fetch(url.toString(), {
                 method: 'DELETE',
-                headers: {authorization: this.password}
+                headers: { authorization: this.password }
             }).catch(() => null);
         }
 
@@ -39,7 +39,7 @@ export class ConcurrencyClient {
 
             const response = await Fetch(url.toString(), {
                 method: 'POST',
-                headers: {authorization: this.password}
+                headers: { authorization: this.password }
             });
 
             if (response.code === 202 || response.code === 204) {
@@ -61,11 +61,11 @@ export class ConcurrencyClient {
     }
 
     public async checkServer(): Promise<number> {
-        const url = new URL(`http://${this.address}:${this.port}/concurrency/check`);
+        const url = new URL(`http://${ this.address }:${ this.port }/concurrency/check`);
         url.searchParams.append('shardId', '0');
         const response = await Fetch(url.toString(), {
             method: 'POST',
-            headers: {authorization: this.password}
+            headers: { authorization: this.password }
         });
         return Number(response.body);
     }

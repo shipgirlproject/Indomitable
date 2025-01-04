@@ -94,7 +94,7 @@ export class ConcurrencyServer {
             return void response.end('Expected shardId to be a number');
         }
 
-        this.manager.emit(LibraryEvents.DEBUG, `Received a request in concurrency server! =>\n  Url: ${request.url}\n  Method: ${request.method}\n  ShardId: ${shardId}`);
+        this.manager.emit(LibraryEvents.DEBUG, `Received a request in concurrency server! =>\n  Url: ${ request.url }\n  Method: ${ request.method }\n  ShardId: ${ shardId }`);
 
         if (request.method === 'DELETE' && request.url.includes('/concurrency/cancel')) {
             this.concurrency.abortIdentify(shardId);

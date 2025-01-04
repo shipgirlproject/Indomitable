@@ -214,7 +214,7 @@ export class Indomitable extends EventEmitter {
         super();
         this.clusterCount = options.clusterCount || 'auto';
         this.shardCount = options.shardCount || 'auto';
-        this.clientOptions = options.clientOptions || {intents: [1 << 0]};
+        this.clientOptions = options.clientOptions || { intents: [ 1 << 0 ] };
         this.clusterSettings = options.clusterSettings || {};
         this.ipcTimeout = options.ipcTimeout ?? 30000;
         this.spawnTimeout = options.spawnTimeout ?? 60000;
@@ -277,7 +277,7 @@ export class Indomitable extends EventEmitter {
             const sessions = await this.fetchSessions();
             this.concurrencyServer = new ConcurrencyServer(this, sessions.session_start_limit.max_concurrency);
             const info = await this.concurrencyServer.start();
-            this.emit(LibraryEvents.DEBUG, `Handle concurrency is currently enabled! =>\n  Server is currently bound to:\n    Address: ${info.address}:${info.port}\n    Concurrency: ${sessions.session_start_limit.max_concurrency}`);
+            this.emit(LibraryEvents.DEBUG, `Handle concurrency is currently enabled! =>\n  Server is currently bound to:\n    Address: ${ info.address }:${ info.port }\n    Concurrency: ${ sessions.session_start_limit.max_concurrency }`);
         }
 
         if (typeof this.clusterCount !== 'number')
@@ -290,15 +290,15 @@ export class Indomitable extends EventEmitter {
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;
 
-        this.emit(LibraryEvents.DEBUG, `Starting ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
-        const shards = [...Array(this.shardCount).keys()];
+        this.emit(LibraryEvents.DEBUG, `Starting ${ this.shardCount } websocket shards across ${ this.clusterCount } clusters`);
+        const shards = [ ...Array(this.shardCount).keys() ];
         const chunks = Chunk(shards, Math.round(this.shardCount / this.clusterCount));
 
-        Cluster.setupPrimary({...{serialization: 'json'}, ...this.clusterSettings});
+        Cluster.setupPrimary({ ...{ serialization: 'json' }, ...this.clusterSettings });
 
         for (let id = 0; id < this.clusterCount; id++) {
             const chunk = chunks.shift()!;
-            const cluster = new ClusterManager({id, shards: chunk, manager: this});
+            const cluster = new ClusterManager({ id, shards: chunk, manager: this });
             this.clusters.set(id, cluster);
         }
 
@@ -313,7 +313,7 @@ export class Indomitable extends EventEmitter {
     public async restart(clusterId: number): Promise<void> {
         if (!Cluster.isPrimary) return;
         const cluster = this.clusters.get(clusterId);
-        if (!cluster) throw new Error(`Invalid clusterId, or a cluster with this id doesn\'t exist, received id ${clusterId}`);
+        if (!cluster) throw new Error(`Invalid clusterId, or a cluster with this id doesn\'t exist, received id ${ clusterId }`);
         await this.addToSpawnQueue(cluster);
     }
 
@@ -362,7 +362,7 @@ export class Indomitable extends EventEmitter {
      * @returns An array of promise that resolves to undefined or an unknown value depending on how you reply to it
      */
     public broadcast(sendable: Sendable): Promise<unknown[]> {
-        const clusters = [...this.clusters.keys()];
+        const clusters = [ ...this.clusters.keys() ];
         return Promise.all(clusters.map(id => this.send(id, sendable)));
     }
 
@@ -377,20 +377,20 @@ export class Indomitable extends EventEmitter {
             const sessions = await this.fetchSessions();
             this.shardCount = sessions.shards;
         }
-        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.shardCount} shard(s)`);
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${ this.shardCount } shard(s)`);
         const oldClusterCount = Number(this.clusters.size);
         this.clusterCount = options.clusters || this.clusters.size;
-        const shards = [...Array(this.shardCount).keys()];
+        const shards = [ ...Array(this.shardCount).keys() ];
         const chunks = Chunk(shards, Math.round(this.shardCount as number / this.clusterCount));
         if (oldClusterCount < this.clusterCount) {
             const count = this.clusterCount - oldClusterCount;
             for (let id = this.clusterCount - 1; id < count; id++) {
-                const cluster = new ClusterManager({id, shards: [], manager: this});
+                const cluster = new ClusterManager({ id, shards: [], manager: this });
                 this.clusters.set(id, cluster);
             }
         }
         if (oldClusterCount > this.clusterCount) {
-            const keys = [...this.clusters.keys()].reverse();
+            const keys = [ ...this.clusters.keys() ].reverse();
             const range = keys.slice(0, oldClusterCount - this.clusterCount);
             for (const key of range) {
                 const cluster = this.clusters.get(key);
@@ -398,7 +398,7 @@ export class Indomitable extends EventEmitter {
                 this.clusters.delete(key);
             }
         }
-        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${this.clusterCount} cluster(s) from ${oldClusterCount} cluster(s)`);
+        this.emit(LibraryEvents.DEBUG, `Reconfigured Indomitable to use ${ this.clusterCount } cluster(s) from ${ oldClusterCount } cluster(s)`);
         for (const cluster of this.clusters.values()) {
             cluster.shards = chunks.shift()!;
         }
@@ -429,7 +429,7 @@ export class Indomitable extends EventEmitter {
             data: {},
             internal: true
         };
-        await this.send(id, {content, reply: true});
+        await this.send(id, { content, reply: true });
     }
 
     /**
@@ -439,7 +439,7 @@ export class Indomitable extends EventEmitter {
     private async processQueue(): Promise<void> {
         if (this.isBusy || !this.spawnQueue.length) return;
         this.busy = true;
-        this.emit(LibraryEvents.DEBUG, `Processing spawn queue with ${this.spawnQueue.length} clusters waiting to be spawned....`);
+        this.emit(LibraryEvents.DEBUG, `Processing spawn queue with ${ this.spawnQueue.length } clusters waiting to be spawned....`);
         let cluster: ClusterManager;
         while (this.spawnQueue.length > 0) {
             try {
@@ -453,7 +453,7 @@ export class Indomitable extends EventEmitter {
             } catch (error: unknown) {
                 this.emit(LibraryEvents.ERROR, error as Error);
                 if (cluster! && this.autoRestart) {
-                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${cluster.id} containing [ ${cluster.shards.join(', ')} ] shard(s). Re-queuing if not in spawn queue`);
+                    this.emit(LibraryEvents.DEBUG, `Failed to spawn Cluster ${ cluster.id } containing [ ${ cluster.shards.join(', ') } ] shard(s). Re-queuing if not in spawn queue`);
                     this.spawnQueue.push(cluster);
                 }
             }

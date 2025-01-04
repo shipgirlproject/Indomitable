@@ -59,7 +59,7 @@ export class ClusterManager {
      * @param delay Time to wait before restarting worker process
      */
     public async respawn(delay: number = this.manager.spawnDelay) {
-        this.manager.emit(LibraryEvents.DEBUG, `Restarting Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
+        this.manager.emit(LibraryEvents.DEBUG, `Restarting Cluster ${ this.id } containing [ ${ this.shards.join(', ') } ] shard(s)...`);
         this.destroy('SIGKILL');
         await Delay(delay);
         await this.spawn();
@@ -69,7 +69,7 @@ export class ClusterManager {
      * Spawn a worker process
      */
     public async spawn() {
-        this.manager.emit(LibraryEvents.DEBUG, `Spawning Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)...`);
+        this.manager.emit(LibraryEvents.DEBUG, `Spawning Cluster ${ this.id } containing [ ${ this.shards.join(', ') } ] shard(s)...`);
         this.worker = Cluster.fork({
             INDOMITABLE_SHARDS: this.shards.join(' '),
             INDOMITABLE_SHARDS_TOTAL: this.manager.shardCount.toString(),
@@ -91,7 +91,7 @@ export class ClusterManager {
         if (!this.started) this.started = true;
         this.manager.emit(LibraryEvents.WORKER_FORK, this);
         if (this.manager.waitForReady) await this.wait();
-        this.manager.emit(LibraryEvents.DEBUG, `Successfully spawned Cluster ${this.id} containing [ ${this.shards.join(', ')} ] shard(s)! | Waited for cluster ready? ${this.manager.waitForReady}`);
+        this.manager.emit(LibraryEvents.DEBUG, `Successfully spawned Cluster ${ this.id } containing [ ${ this.shards.join(', ') } ] shard(s)! | Waited for cluster ready? ${ this.manager.waitForReady }`);
         this.manager.emit(LibraryEvents.WORKER_READY, this);
         await Delay(this.manager.spawnDelay);
     }
@@ -104,7 +104,7 @@ export class ClusterManager {
         this.worker = undefined;
         this.ready = false;
         this.readyAt = -1;
-        this.manager.emit(LibraryEvents.DEBUG, `Cluster ${this.id} exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
+        this.manager.emit(LibraryEvents.DEBUG, `Cluster ${ this.id } exited with close code ${ code || 'unknown' } signal ${ signal || 'unknown' }`);
         this.manager.emit(LibraryEvents.WORKER_EXIT, code, signal, this);
     }
 
@@ -117,7 +117,7 @@ export class ClusterManager {
         return new Promise((resolve, reject) => {
             const ms = this.manager.spawnTimeout * this.shards.length;
             const seconds = Math.round(ms / 1000);
-            this.manager.emit(LibraryEvents.DEBUG, `Waiting for client ready event for ${seconds} second(s)`);
+            this.manager.emit(LibraryEvents.DEBUG, `Waiting for client ready event for ${ seconds } second(s)`);
             let timeout: NodeJS.Timeout;
             const listener = (data: ShardEventData) => {
                 if (data.clusterId !== this.id) return;
@@ -130,7 +130,7 @@ export class ClusterManager {
             timeout = setTimeout(() => {
                 this.manager.off(LibraryEvents.CLIENT_READY, listener);
                 this.destroy();
-                reject(new Error(`Cluster ${this.id} did not get ready in ${seconds} second(s)`));
+                reject(new Error(`Cluster ${ this.id } did not get ready in ${ seconds } second(s)`));
             }, ms).unref();
             this.manager.on(LibraryEvents.CLIENT_READY, listener);
         });

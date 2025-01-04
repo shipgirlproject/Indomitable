@@ -29,7 +29,7 @@ export class IpcServer {
 
             this.server.once('error', listener);
 
-            this.server.listen(`./indomitable-${this.serverId}`, () => {
+            this.server.listen(`./indomitable-${ this.serverId }`, () => {
                 // @ts-expect-error: why this errors?
                 this.server.removeListener('error', listener);
 
@@ -37,7 +37,7 @@ export class IpcServer {
                     .on('connection', (socket) => {
 
                     })
-                    .on('error', (code) => this.manager.emit(LibraryEvents.ERROR, new Error(`IPC server errored with code: ${code}`)));
+                    .on('error', (code) => this.manager.emit(LibraryEvents.ERROR, new Error(`IPC server errored with code: ${ code }`)));
 
                 resolve();
             });

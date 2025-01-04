@@ -85,7 +85,7 @@ export abstract class BaseSocket {
             };
             this.socket.write(JSON.stringify(data));
             if (!data.reply) return resolve(undefined);
-            this.waitForPromise({nonce, resolve, reject, signal: transportable.signal});
+            this.waitForPromise({ nonce, resolve, reject, signal: transportable.signal });
         });
     }
 
