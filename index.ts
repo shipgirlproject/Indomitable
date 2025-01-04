@@ -1,10 +1,10 @@
 export * from './src/client/ShardClient';
 export * from './src/client/ShardClientUtil';
 export * from './src/concurrency/ConcurrencyManager';
-export * from './src/ipc/BaseIpc';
-export * from './src/ipc/MainWorker';
-export * from './src/ipc/BaseWorker';
-export * from './src/ipc/ClientWorker';
+export * from './src/ipc/BaseSocket';
+export * from './src/ipc/ClientSocket';
+export * from './src/ipc/ServerSocket';
+export * from './src/ipc/IpcServer';
 export * from './src/manager/ClusterManager';
 export * from './src/Indomitable';
 export * as Utils from './src/Util';
