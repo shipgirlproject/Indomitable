@@ -1,7 +1,7 @@
+import type { Indomitable, ShardEventData } from '../Indomitable';
+import type { ServerSocket } from '../ipc/ServerSocket';
 import Cluster, { Worker } from 'node:cluster';
 import { clearTimeout } from 'node:timers';
-import { Indomitable, ShardEventData } from '../Indomitable';
-import { MainWorker } from '../ipc/MainWorker';
 import { Delay, LibraryEvents } from '../Util';
 
 /**
@@ -19,7 +19,6 @@ export interface ClusterManagerOptions {
 export class ClusterManager {
     public readonly manager: Indomitable;
     public readonly id: number;
-    public readonly ipc: MainWorker;
     public shards: number[];
     public started: boolean;
     public ready: boolean;
@@ -35,12 +34,15 @@ export class ClusterManager {
         this.manager = options.manager;
         this.id = options.id;
         this.shards = options.shards;
-        this.ipc = new MainWorker(this);
         this.started = false;
         this.started = false;
         this.ready = false;
         this.readyAt = -1;
         this.worker = undefined;
+    }
+
+    get ipc(): ServerSocket | undefined {
+        return this.manager.ipcServer!.getServer(this.id.toString());
     }
 
     /**
@@ -76,10 +78,10 @@ export class ClusterManager {
             INDOMITABLE_CONCURRENCY_SERVER_ADDRESS: this.manager.concurrencyServer?.info.address,
             INDOMITABLE_CONCURRENCY_SERVER_PORT: this.manager.concurrencyServer?.info.port,
             INDOMITABLE_CONCURRENCY_SERVER_PASSWORD: this.manager.concurrencyServer?.key,
+            INDOMITABLE_SERVER_IPC_ID: this.manager.ipcServer!.serverId,
             ...process.env
         });
         this.worker
-            .on('message', message => this.ipc.handleRawResponse(message, error => this.manager.emit(LibraryEvents.ERROR, error as Error)))
             .on('error', error => this.manager.emit(LibraryEvents.ERROR, error as Error))
             .once('exit', (code, signal) => {
                 this.cleanup(code, signal);
@@ -98,7 +100,6 @@ export class ClusterManager {
      * Remove all listeners on attached worker process and free from memory
      */
     private cleanup(code: number|null, signal: string|null) {
-        this.ipc.flushPromises(`Cluster exited with close code ${code || 'unknown'} signal ${signal || 'unknown'}`);
         this.worker?.removeAllListeners();
         this.worker = undefined;
         this.ready = false;

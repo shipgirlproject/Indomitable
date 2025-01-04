@@ -9,11 +9,12 @@ export const EnvProcessData = {
     clusterId: Number(process.env.INDOMITABLE_CLUSTER || 0),
     clusterCount: Number(process.env.INDOMITABLE_CLUSTER_TOTAL || 0),
     shardIds: (process.env.INDOMITABLE_SHARDS || '').split(' ').map(Number),
-    shardCount: Number(process.env.INDOMITABLE_SHARDS_TOTAL || 0)
+    shardCount: Number(process.env.INDOMITABLE_SHARDS_TOTAL || 0),
+    serverIpcId: process.env.INDOMITABLE_SERVER_IPC_ID || ''
 };
 
 /**
- * Internal operation codes for the cluster -> thread
+ * Internal operation codes for the main process -> cluster process
  */
 export enum MainStrategyOps {
     CONNECT = 'connect',
@@ -24,7 +25,7 @@ export enum MainStrategyOps {
 }
 
 /**
- * Internal operation codes for the thread <- cluster
+ * Internal operation codes for the cluster process -> main process
  */
 export enum ThreadStrategyOps {
     REQUEST_IDENTIFY = 'requestIdentify',
@@ -43,7 +44,8 @@ export enum InternalOps {
     RESTART_ALL = 'restartAll',
     DESTROY_CLIENT = 'destroyClient',
     SESSION_INFO = 'sessionInfo',
-    PING = 'ping'
+    PING = 'ping',
+    IDENTIFY = 'identify'
 }
 
 /**
@@ -105,22 +107,29 @@ export interface ThreadStrategyData {
     internal: true
 }
 
+export interface InternalData {
+    internal: true
+}
+
 /**
  * Data structure representing an internal event
  */
-export interface InternalOpsData {
-    op: InternalOps,
-    data: any,
-    internal: true
+export interface InternalOpsData extends InternalData {
+    op: InternalOps;
+    data: any;
 }
 
 /**
  * Data structure representing an internal discord.js event
  */
-export interface ClientEventData {
-    op: ClientEvents,
-    data: any,
-    internal: true,
+export interface ClientEventData extends InternalData {
+    op: ClientEvents;
+    data: any;
+}
+
+export interface IpcIdentify {
+    clusterId: number;
+    serverId: string;
 }
 
 /**
@@ -137,8 +146,8 @@ export interface IpcErrorData {
  */
 export interface Transportable {
     content: any;
-    repliable?: boolean;
-    signal?: AbortSignal
+    reply?: boolean;
+    signal?: AbortSignal;
 }
 
 /**
@@ -150,12 +159,12 @@ export type Sendable = Omit<Transportable, 'signal'>;
  * Data structure representing an internal abort data
  */
 export interface InternalAbortSignal {
-    listener: () => void,
+    listener: () => void;
     signal: AbortSignal
 }
 
 export interface SavePromiseOptions {
-    id: string;
+    nonce: string;
     resolve: (data: unknown) => void;
     reject: (reason: unknown) => void;
     signal?: AbortSignal | undefined;
@@ -181,20 +190,11 @@ export interface InternalPromise {
 /**
  * Data structure representing internal IPC data
  */
-export interface RawIpcMessage {
-    id: string|null;
+export interface RawIpcMessage extends InternalData {
+    nonce: string;
     content: any;
-    internal: true;
+    reply: boolean;
     type: RawIpcMessageType
-}
-
-/**
- * Data structure representing an IPC message
- */
-export interface Message {
-    reply: (data: any) => void;
-    content: any;
-    repliable: boolean;
 }
 
 /**

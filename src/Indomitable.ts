@@ -1,4 +1,5 @@
 import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
+import type { Message } from './ipc/BaseSocket';
 import Cluster, { ClusterSettings } from 'node:cluster';
 import EventEmitter from 'node:events';
 import Os from 'node:os';
@@ -6,6 +7,7 @@ import { clearTimeout } from 'node:timers';
 import { ConcurrencyServer } from './concurrency/ConcurrencyServer';
 import { ShardClient } from './client/ShardClient';
 import { ClusterManager } from './manager/ClusterManager';
+import { IpcServer } from './ipc/IpcServer';
 import {
     Chunk,
     FetchSessions,
@@ -14,12 +16,10 @@ import {
     InternalOps,
     InternalOpsData,
     LibraryEvents,
-    Message,
     SessionObject,
     Transportable,
     Sendable
 } from './Util';
-
 
 /**
  * Options to control Indomitable behavior
@@ -145,6 +145,7 @@ export class Indomitable extends EventEmitter {
     public shardCount: number|'auto';
     public cachedSession?: SessionObject;
     public concurrencyServer?: ConcurrencyServer;
+    public ipcServer?: IpcServer;
     public readonly clientOptions: DiscordJsClientOptions;
     public readonly clusterSettings: ClusterSettings;
     public readonly ipcTimeout: number;
@@ -188,6 +189,7 @@ export class Indomitable extends EventEmitter {
         this.token = options.token;
         this.clusters = new Map();
         this.spawnQueue = [];
+        this.ipcServer = undefined;
         this.concurrencyServer = undefined;
         this.cachedSession = undefined;
         this.busy = false;
@@ -230,29 +232,39 @@ export class Indomitable extends EventEmitter {
             await shardClient.start(this.token);
             return;
         }
+
+        this.ipcServer = new IpcServer(this);
+        await this.ipcServer.listen();
+
         if (this.handleConcurrency) {
             const sessions = await this.fetchSessions();
             this.concurrencyServer = new ConcurrencyServer(this, sessions.session_start_limit.max_concurrency);
             const info = await this.concurrencyServer.start();
             this.emit(LibraryEvents.DEBUG, `Handle concurrency is currently enabled! =>\n  Server is currently bound to:\n    Address: ${info.address}:${info.port}\n    Concurrency: ${sessions.session_start_limit.max_concurrency}`);
         }
+
         if (typeof this.clusterCount !== 'number')
             this.clusterCount = Os.cpus().length;
         if (typeof this.shardCount !== 'number') {
             const sessions = await this.fetchSessions();
             this.shardCount = sessions.shards;
         }
+
         if (this.shardCount < this.clusterCount)
             this.clusterCount = this.shardCount;
+
         this.emit(LibraryEvents.DEBUG, `Starting ${this.shardCount} websocket shards across ${this.clusterCount} clusters`);
         const shards = [ ...Array(this.shardCount).keys() ];
         const chunks = Chunk(shards, Math.round(this.shardCount / this.clusterCount));
+
         Cluster.setupPrimary({ ...{ serialization: 'json' }, ...this.clusterSettings  });
+
         for (let id = 0; id < this.clusterCount; id++) {
             const chunk = chunks.shift()!;
             const cluster = new ClusterManager({ id, shards: chunk, manager: this });
             this.clusters.set(id, cluster);
         }
+
         await this.addToSpawnQueue(...this.clusters.values());
     }
 
@@ -286,13 +298,13 @@ export class Indomitable extends EventEmitter {
         if (!cluster) throw new Error('Invalid cluster id provided');
 
         let abortableData: AbortableData|undefined;
-        if (this.ipcTimeout !== Infinity && sendable.repliable) {
+        if (this.ipcTimeout !== Infinity && sendable.reply) {
             abortableData = MakeAbortableRequest(this.ipcTimeout);
         }
 
         let transportable: Transportable = {
             content: sendable.content,
-            repliable: sendable.repliable
+            reply: sendable.reply
         };
 
         if (abortableData) {
@@ -300,7 +312,7 @@ export class Indomitable extends EventEmitter {
         }
 
         try {
-            return await cluster.ipc.send(transportable);
+            return await cluster.ipc?.send(transportable);
         } finally {
             if (abortableData) {
                 clearTimeout(abortableData.timeout);
@@ -380,7 +392,7 @@ export class Indomitable extends EventEmitter {
             data: {},
             internal: true
         };
-        await this.send(id, { content, repliable: true });
+        await this.send(id, { content, reply: true });
     }
 
     /**
