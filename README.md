@@ -36,6 +36,10 @@
 
 ## Installation
 
+### Requirements
+
+- Node.js >= 22.9.0
+
 - Stable
 
 > `npm install indomitable`
@@ -59,10 +63,7 @@ const { Indomitable } = require("indomitable");
 const { Client } = require("discord.js");
 const token = "your_token";
 
-const manager = new Indomitable({ client: Client, token }).on(
-  "error",
-  console.error
-);
+const manager = new Indomitable({ client: Client, token }).on("error", console.error);
 
 manager.spawn();
 ```
@@ -75,21 +76,21 @@ const { Client } = require("discord.js");
 const token = "your_token";
 
 const options = {
-  // Processes to run
-  clusterCount: 2,
-  // Websocket shards to run
-  shardCount: 8,
-  // Discord.js options
-  clientOptions: {
-    intents: [1 << 0], // Bitwise for GUILD intent only
-  },
-  // Auto restart processes that have been killed
-  // This defaults to false by default unless you specify it
-  autoRestart: true,
-  // Discord.js client
-  client: Client,
-  // Your bot token
-  token,
+	// Processes to run
+	clusterCount: 2,
+	// Websocket shards to run
+	shardCount: 8,
+	// Discord.js options
+	clientOptions: {
+		intents: [1 << 0], // Bitwise for GUILD intent only
+	},
+	// Auto restart processes that have been killed
+	// This defaults to false by default unless you specify it
+	autoRestart: true,
+	// Discord.js client
+	client: Client,
+	// Your bot token
+	token,
 };
 
 const manager = new Indomitable(options).on("error", console.error);
@@ -103,9 +104,7 @@ manager.spawn();
 // Saya's note:
 // Not recommended as every broadcastEval uses eval() internally
 // Consider learning the ipc system of this library in future to get data across your clusters
-client.shard
-  .broadcastEval((client) => client.guilds.cache.size)
-  .then(console.log);
+client.shard.broadcastEval((client) => client.guilds.cache.size).then(console.log);
 ```
 
 > Example of a very basic ipc communication (non repliable)
@@ -113,9 +112,9 @@ client.shard
 ```js
 // Primary Process
 indomitable.on("message", (message) => {
-  if (message.content.op === "something") {
-    doSomething();
-  }
+	if (message.content.op === "something") {
+		doSomething();
+	}
 });
 // ClientWorker Process (your client most likely)
 client.shard.send({ content: { op: "something" } }).catch(console.error);
@@ -126,17 +125,17 @@ client.shard.send({ content: { op: "something" } }).catch(console.error);
 ```js
 // Primary Process
 indomitable.on("message", (message) => {
-  if (message.content.op === "something") {
-    if (!message.repliable) return; // check if the message is repliable just incase, though it won't error even it is not
-    const someValue = doSomething();
-    message.reply(someValue);
-  }
+	if (message.content.op === "something") {
+		if (!message.repliable) return; // check if the message is repliable just incase, though it won't error even it is not
+		const someValue = doSomething();
+		message.reply(someValue);
+	}
 });
 // ClientWorker Process (your client most likely)
 client.shard
-  .send({ content: { op: "something" }, repliable: true })
-  .then(console.log)
-  .catch(console.error);
+	.send({ content: { op: "something" }, repliable: true })
+	.then(console.log)
+	.catch(console.error);
 ```
 
 > You could also do it reversely (main process asking data from clusters instead of clusters asking main process)
@@ -147,31 +146,31 @@ client.shard
 indomitable.send(0, { content: { op: "nya" } }).catch(console.error);
 // send to specific cluster with repliable
 indomitable
-  .send(0, { content: { op: "something" }, repliable: true })
-  .then(console.log)
-  .catch(console.error);
+	.send(0, { content: { op: "something" }, repliable: true })
+	.then(console.log)
+	.catch(console.error);
 // broadcast to all clusters
 indomitable.broadcast({ content: { op: "meow" } }).catch(console.error);
 // broadcast to all clusters with repliable is possible as well
 indomitable
-  .broadcast({ content: { op: "meow" }, repliable: true })
-  .then(console.log)
-  .catch(console.error);
+	.broadcast({ content: { op: "meow" }, repliable: true })
+	.then(console.log)
+	.catch(console.error);
 
 // ClientWorker Process (your client most likely)
 client.shard.on("message", (message) => {
-  if (message.content.op === "something") {
-    if (!message.repliable) return;
-    const someValue = doSomething();
-    message.reply(someValue);
-  }
-  if (message.content.op === "nya") {
-    doSomething();
-  }
-  if (message.content.op === "meow") {
-    if (!message.repliable) return;
-    message.reply("nya");
-  }
+	if (message.content.op === "something") {
+		if (!message.repliable) return;
+		const someValue = doSomething();
+		message.reply(someValue);
+	}
+	if (message.content.op === "nya") {
+		doSomething();
+	}
+	if (message.content.op === "meow") {
+		if (!message.repliable) return;
+		message.reply("nya");
+	}
 });
 ```
 
@@ -179,17 +178,11 @@ client.shard.on("message", (message) => {
 
 ```js
 // Reconfigure to launch more shards based on Discord Recommendation without spawning more clusters
-indomitable
-  .reconfigure()
-  .then(() => console.log("Done, Indomitable is reconfigured"));
+indomitable.reconfigure().then(() => console.log("Done, Indomitable is reconfigured"));
 // Reconfigure to launch more clusters based on your value, but leave the shards based on Discord's recommendation
-indomitable
-  .reconfigure({ clusters: 8 })
-  .then(() => console.log("Done, Indomitable is reconfigured"));
+indomitable.reconfigure({ clusters: 8 }).then(() => console.log("Done, Indomitable is reconfigured"));
 // Reconfigure to launch more clusters or shards based on your values
-indomitable
-  .reconfigure({ clusters: 8, shards: 8 })
-  .then(() => console.log("Done, Indomitable is reconfigured"));
+indomitable.reconfigure({ clusters: 8, shards: 8 }).then(() => console.log("Done, Indomitable is reconfigured"));
 // Do not run restart() or restartAll() while this is running. It will cause your cluster / clusters to restart twice.
 if (!indomitable.isBusy) indomitable.restartAll();
 // Do not use reconfigure for just restarting all clusters sequentially, still use .restartAll() for that
@@ -204,23 +197,23 @@ const { Client } = require("discord.js");
 const token = "your_token";
 
 const options = {
-  // Processes to run
-  clusterCount: 2,
-  // Websocket shards to run
-  shardCount: 8,
-  // Discord.js options
-  clientOptions: {
-    intents: [1 << 0], // Bitwise for GUILD intent only
-  },
-  // Auto restart processes that have been killed
-  // This defaults to false by default unless you specify it
-  autoRestart: true,
-  // Enable max concurrency handling
-  handleConcurrency: true,
-  // Your Discord.js client
-  client: Client,
-  // Your bot token
-  token,
+	// Processes to run
+	clusterCount: 2,
+	// Websocket shards to run
+	shardCount: 8,
+	// Discord.js options
+	clientOptions: {
+		intents: [1 << 0], // Bitwise for GUILD intent only
+	},
+	// Auto restart processes that have been killed
+	// This defaults to false by default unless you specify it
+	autoRestart: true,
+	// Enable max concurrency handling
+	handleConcurrency: true,
+	// Your Discord.js client
+	client: Client,
+	// Your bot token
+	token,
 };
 
 const manager = new Indomitable(options).on("error", console.error);

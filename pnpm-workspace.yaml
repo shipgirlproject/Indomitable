@@ -1,0 +1,18 @@
+allowBuilds:
+  esbuild: false
+  unrs-resolver: false
+
+autoInstallPeers: false
+
+dedupePeers: true
+
+peerDependencyRules:
+  allowAny:
+    - "*"
+  ignoreMissing:
+    - "*"
+
+publicHoistPattern:
+  - "*eslint*"
+
+minimumReleaseAge: 7200

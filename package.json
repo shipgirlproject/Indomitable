@@ -1,60 +1,73 @@
 {
-  "name": "indomitable",
-  "version": "4.2.0",
-  "description": "A lightweight (the actual ship is heavy though) no depedencies, performant, and powerful sharder for Discord.JS",
-  "main": "dist/index.js",
-  "module": "dist/index.mjs",
-  "types": "dist/index.d.ts",
-  "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.mjs",
-      "require": "./dist/index.js",
-      "default": "./dist/index.mjs"
-    }
-  },
-  "scripts": {
-    "build": "npm run build:ts && npm run build:docs",
-    "build:ts": "tsup --config tsup-config.json",
-    "build:docs": "typedoc --theme default --readme README.md --out docs/ --entryPointStrategy expand src/.",
-    "lint": "eslint . --ext .ts --fix",
-    "prepare": "npm run build:ts"
-  },
-  "keywords": [
-    "cluster",
-    "clustering",
-    "sharder",
-    "sharding",
-    "discord",
-    "discord sharder",
-    "discord.js",
-    "discord.js sharder",
-    "discordjs",
-    "discordjs sharder",
-    "bot"
-  ],
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/Deivu/Indomitable.git"
-  },
-  "author": "Saya (Deivu)",
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/Deivu/Indomitable/issues"
-  },
-  "homepage": "https://github.com/Deivu/Indomitable#readme",
-  "peerDependencies": {
-    "discord.js": ">=14.14.x"
-  },
-  "devDependencies": {
-    "@augu/eslint-config": "^5.2.4",
-    "@types/node": "^20.14.10",
-    "@types/ws": "^8.5.11",
-    "@typescript-eslint/eslint-plugin": "^7.16.0",
-    "@typescript-eslint/parser": "^7.16.0",
-    "eslint": "^8.57.0",
-    "tsup": "^8.1.0",
-    "typedoc": "^0.26.4",
-    "typescript": "^5.5.3"
-  }
+	"name": "indomitable",
+	"version": "4.2.0",
+	"description": "A lightweight (the actual ship is heavy though) no depedencies, performant, and powerful sharder for Discord.JS",
+	"keywords": [
+		"bot",
+		"cluster",
+		"clustering",
+		"discord",
+		"discord sharder",
+		"discord.js",
+		"discord.js sharder",
+		"discordjs",
+		"discordjs sharder",
+		"sharder",
+		"sharding"
+	],
+	"homepage": "https://github.com/Deivu/Indomitable#readme",
+	"bugs": {
+		"url": "https://github.com/Deivu/Indomitable/issues"
+	},
+	"license": "MIT",
+	"author": "Saya (Deivu)",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Deivu/Indomitable.git"
+	},
+	"directories": {
+		"lib": "src"
+	},
+	"files": [
+		"dist"
+	],
+	"type": "module",
+	"exports": {
+		".": {
+			"types": "./dist/index.d.mts",
+			"import": "./dist/index.mjs"
+		}
+	},
+	"publishConfig": {
+		"access": "public"
+	},
+	"scripts": {
+		"build": "pnpm build:check && tsdown",
+		"build:check": "tsc --noEmit",
+		"build:docs": "typedoc --theme default --readme README.md --out docs/ --entryPointStrategy expand src/.",
+		"fmt": "oxfmt src",
+		"fmt:check": "oxfmt --check",
+		"lint": "oxfmt --check && eslint src",
+		"lint:fix": "eslint src --fix",
+		"prepack": "pnpm run build"
+	},
+	"devDependencies": {
+		"@discordjs/ws": "^2.0.4",
+		"@types/node": "^25.9.1",
+		"@types/ws": "^8.18.1",
+		"discord.js": "^14.26.4",
+		"eslint": "^10.4.1",
+		"eslint-config-neon": "^0.4.0",
+		"eslint-import-resolver-typescript": "^4.4.5",
+		"lodash.merge": "^4.6.2",
+		"oxfmt": "^0.53.0",
+		"tsdown": "^0.22.1",
+		"typedoc": "^0.28.19",
+		"typescript": "^6.0.3",
+		"typescript-eslint": "^8.60.1"
+	},
+	"engines": {
+		"node": ">=22.9.0"
+	},
+	"packageManager": "pnpm@11.5.2"
 }

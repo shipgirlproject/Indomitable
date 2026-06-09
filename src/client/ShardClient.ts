@@ -1,87 +1,110 @@
-import type { Client, ClientOptions as DiscordJsClientOptions } from 'discord.js';
-import { Indomitable } from '../Indomitable';
-import { EnvProcessData, ClientEvents, ClientEventData, Delay } from '../Util';
-import { ShardClientUtil } from './ShardClientUtil';
-import { ConcurrencyClient } from '../concurrency/ConcurrencyClient';
+import type { Client, ClientOptions as DiscordJsClientOptions } from "discord.js";
+import type { Indomitable } from "../Indomitable.js";
+import type { ClientEventData } from "../Util.js";
+import { EnvProcessData, ClientEvents } from "../Util.js";
+import { ConcurrencyClient } from "../concurrency/ConcurrencyClient.js";
+import { ShardClientUtil } from "./ShardClientUtil.js";
 
-export interface PartialInternalEvents {
-    op: ClientEvents,
-    data: { clusterId: number, shardId?: number, replayed?: number, event?: CloseEvent, ipcId?: string }
+export interface InternalEvents {
+	data: {
+		clusterId: number;
+		event?: CloseEvent;
+		ipcId?: string;
+		replayed?: number;
+		shardId?: number;
+	};
+	op: ClientEvents;
 }
 
 /**
  * A little helper on binding Indomitable to Discord.JS client
  */
 export class ShardClient {
-    /**
-     * Indomitable instance (non master client)
-     * @private
-     */
-    private readonly manager: Indomitable;
-    /**
-     * Discord.JS client
-     * @private
-     */
-    private readonly client: Client;
-    /**
-     * Cluster Id of this helper
-     * @private
-     */
-    private readonly clusterId: number;
-    /**
-     * Concurrency client for this instance, if available
-     * @private
-     */
-    private readonly concurrency?: ConcurrencyClient;
+	private readonly client: Client;
 
-    public constructor(manager: Indomitable) {
-        this.manager = manager;
-        const clientOptions = manager.clientOptions as DiscordJsClientOptions || {};
-        clientOptions.shards = EnvProcessData.shardIds;
-        clientOptions.shardCount = EnvProcessData.shardCount;
-        if (manager.handleConcurrency) {
-            this.concurrency = new ConcurrencyClient();
-            if (!clientOptions.ws) clientOptions.ws = {};
-            clientOptions.ws.buildIdentifyThrottler = () => Promise.resolve(this.concurrency!);
-        }   
-        this.client = new manager.client(clientOptions);
-        // @ts-expect-error: Override shard client util with indomitable shard client util
-        this.client.shard = new ShardClientUtil(this.client, manager);
-        this.clusterId = Number(EnvProcessData.clusterId);
-    }
+	private readonly clusterId: number;
 
-    /**
-     * Starts this client
-     * @param token
-     */
-    public async start(token: string): Promise<void> {
-        if (this.concurrency) {
-            // tests the server if it's accessible first before starting the client
-            this.client.emit('debug', '[Indomitable]: Handle concurrency enabled! Testing the identify server before logging in...');
-            const date = await this.concurrency.checkServer();
-            this.client.emit('debug', `[Indomitable]: Identify server responded and is working, Trip Latency: ${Math.round(Date.now() - date)}ms`);
-        }
-        // attach listeners 
-        this.client.once('ready', () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId }}));
-        this.client.on('shardReady', (shardId: number) => this.send({ op: ClientEvents.SHARD_READY, data: { clusterId: this.clusterId, shardId }}));
-        this.client.on('shardReconnecting', (shardId: number) => this.send({ op: ClientEvents.SHARD_RECONNECT, data: { clusterId: this.clusterId, shardId }}));
-        this.client.on('shardResume', (shardId: number, replayed: number) => this.send({ op: ClientEvents.SHARD_RESUME, data: { clusterId: this.clusterId, shardId, replayed }}));
-        // @ts-ignore -- Discord.JS faulty typings?
-        this.client.on('shardDisconnect', (event: CloseEvent, shardId: number) => this.send({ op: ClientEvents.SHARD_DISCONNECT, data: { clusterId: this.clusterId, shardId, event }}));
-        await this.client.login(token);
-    }
+	private readonly concurrency?: ConcurrencyClient;
 
-    /**
-     * A helper send code to make myself less miserable
-     * @param partial
-     * @private
-     */
-    private send(partial: PartialInternalEvents): void {
-        // @ts-ignore -- our own class
-        const shardClientUtil = this.client.shard as ShardClientUtil;
-        const content: ClientEventData = { ...partial, internal: true };
-        shardClientUtil
-            .send({ content, repliable: false })
-            .catch((error: unknown) => this.client.emit(ClientEvents.ERROR, error as Error));
-    }
+	public constructor(private readonly manager: Indomitable) {
+		const base = (this.manager.clientOptions as DiscordJsClientOptions) ?? {};
+
+		const clientOptions: DiscordJsClientOptions = {
+			...base,
+			shards: EnvProcessData.shardIds,
+			shardCount: EnvProcessData.shardCount,
+		};
+
+		if (this.manager.handleConcurrency) {
+			this.concurrency = new ConcurrencyClient();
+
+			clientOptions.ws ??= {};
+			clientOptions.ws.buildIdentifyThrottler = async () => this.concurrency!;
+		}
+
+		this.client = new this.manager.client(clientOptions);
+
+		// @ts-expect-error override discord.js shard util
+		this.client.shard = new ShardClientUtil(this.client, this.manager);
+
+		this.clusterId = Number(EnvProcessData.clusterId);
+	}
+
+	public async start(token: string): Promise<void> {
+		if (this.concurrency) {
+			this.client.emit("debug", "[Indomitable]: concurrency enabled, testing identify server...");
+
+			const start = await this.concurrency.checkServer();
+
+			this.client.emit("debug", `[Indomitable]: identify server OK (${Math.round(Date.now() - start)}ms)`);
+		}
+
+		this.client.once("ready", () => this.send({ op: ClientEvents.READY, data: { clusterId: this.clusterId } }));
+
+		this.client.on("shardReady", (shardId: number) =>
+			this.send({
+				op: ClientEvents.SHARD_READY,
+				data: { clusterId: this.clusterId, shardId },
+			}),
+		);
+
+		this.client.on("shardReconnecting", (shardId: number) =>
+			this.send({
+				op: ClientEvents.SHARD_RECONNECT,
+				data: { clusterId: this.clusterId, shardId },
+			}),
+		);
+
+		this.client.on("shardResume", (shardId: number, replayed: number) =>
+			this.send({
+				op: ClientEvents.SHARD_RESUME,
+				data: { clusterId: this.clusterId, shardId, replayed },
+			}),
+		);
+
+		// @ts-expect-error discord.js typing mismatch
+		this.client.on("shardDisconnect", (event: CloseEvent, shardId: number) =>
+			this.send({
+				op: ClientEvents.SHARD_DISCONNECT,
+				data: { clusterId: this.clusterId, shardId, event },
+			}),
+		);
+
+		await this.client.login(token);
+	}
+
+	private send(packet: InternalEvents): void {
+		// @ts-expect-error: our own class
+		const shardUtil = this.client.shard as ShardClientUtil;
+
+		const payload: ClientEventData = {
+			...packet,
+			internal: true,
+		};
+
+		shardUtil
+			.send({ content: payload, repliable: false })
+			// eslint-disable-next-line promise/prefer-await-to-callbacks, promise/prefer-await-to-then
+			.catch((error: unknown) => this.client.emit(ClientEvents.ERROR, error as Error));
+	}
 }
