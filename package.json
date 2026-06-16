@@ -51,8 +51,10 @@
 		"lint:fix": "eslint src --fix",
 		"prepack": "pnpm run build"
 	},
+	"dependencies": {
+		"@discordjs/ws": "^2.0.4"
+	},
 	"devDependencies": {
-		"@discordjs/ws": "^2.0.4",
 		"@types/node": "^25.9.1",
 		"@types/ws": "^8.18.1",
 		"discord.js": "^14.26.4",
