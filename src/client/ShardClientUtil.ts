@@ -1,11 +1,13 @@
 import EventEmitter from "node:events";
 import process from "node:process";
 import { clearTimeout } from "node:timers";
+import type { WebSocketManager } from "@discordjs/ws";
 import type { Client } from "discord.js";
 import type { Indomitable } from "../Indomitable.js";
 import type { AbortableData, InternalOpsData, Message, SessionObject, Transportable } from "../Util.js";
 import { EnvProcessData, MakeAbortableRequest, InternalOps } from "../Util.js";
 import { ClientWorker } from "../ipc/ClientWorker.js";
+import type { IndomitableShardingStrategyInterface } from "../strategies/IndomitableShardingStrategyInterface.js";
 
 export interface ShardClientUtilEvents {
 	message: [message: Message];
@@ -51,6 +53,15 @@ export class ShardClientUtil extends EventEmitter<ShardClientUtilEvents> {
 		const start = process.hrtime.bigint();
 		const end = (await this.send({ content, repliable: true })) as number;
 		return Number(BigInt(end) - start);
+	}
+
+	/**
+	 * Returns the current WebSocket sharding strategy.
+	 */
+	public get strategy(): IndomitableShardingStrategyInterface {
+		// @ts-expect-error internal field
+		// eslint-disable-next-line @typescript-eslint/dot-notation
+		return (this.client.ws["_ws"] as WebSocketManager).strategy;
 	}
 
 	/**

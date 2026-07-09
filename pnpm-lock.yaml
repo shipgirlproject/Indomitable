@@ -8,10 +8,11 @@ settings:
 importers:
 
   .:
-    devDependencies:
+    dependencies:
       '@discordjs/ws':
         specifier: ^2.0.4
         version: 2.0.4
+    devDependencies:
       '@types/node':
         specifier: ^25.9.1
         version: 25.9.1

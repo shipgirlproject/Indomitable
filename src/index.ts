@@ -1,6 +1,7 @@
 export * from "./client/ShardClient.js";
 export * from "./client/ShardClientUtil.js";
 export * from "./concurrency/ConcurrencyManager.js";
+export * from "./strategies/IndomitableWorkerShardingStrategy.js";
 export * from "./ipc/BaseIpc.js";
 export * from "./ipc/MainWorker.js";
 export * from "./ipc/BaseWorker.js";
